@@ -103,15 +103,21 @@ struct ContentView: View {
     // MARK: - 統計卡片區域
     private var expenseCardSection: some View {
         VStack(spacing: 16) {
+            // 日期範圍顯示
+            Text(dataManager.currentMonthDateRangeText)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .padding(.horizontal)
+            
             // 主要餘額卡片
             VStack(spacing: 12) {
-                Text("目前餘額")
+                Text("本月餘額")
                     .font(.headline)
                     .foregroundColor(.secondary)
                 
-                Text(dataManager.formattedBalance.text)
+                Text(dataManager.formattedCurrentMonthBalance.text)
                     .font(.system(size: 36, weight: .bold, design: .rounded))
-                    .foregroundColor(dataManager.formattedBalance.color)
+                    .foregroundColor(dataManager.formattedCurrentMonthBalance.color)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 30)
@@ -130,15 +136,15 @@ struct ContentView: View {
             // 收入支出卡片
             HStack(spacing: 16) {
                 StatisticCard(
-                    title: "總收入",
-                    amount: dataManager.formatAmount(dataManager.totalIncome),
+                    title: "本月收入",
+                    amount: dataManager.formatAmount(dataManager.currentMonthIncome),
                     color: .green,
                     icon: "arrow.up.circle.fill"
                 )
                 
                 StatisticCard(
-                    title: "總支出",
-                    amount: dataManager.formatAmount(dataManager.totalExpense),
+                    title: "本月支出",
+                    amount: dataManager.formatAmount(dataManager.currentMonthExpense),
                     color: .red,
                     icon: "arrow.down.circle.fill"
                 )

@@ -44,10 +44,7 @@ class ExpenseDataManager: ObservableObject {
     init() {
         loadCategories()
         loadExpenses()
-        // 若無資料，自動產生兩個月假資料
-        if expenses.isEmpty {
-            addTwoMonthsOfFakeExpenses()
-        }
+        // 移除自動產生假資料的程式碼
     }
     
     // MARK: - 分類管理
@@ -234,6 +231,74 @@ class ExpenseDataManager: ObservableObject {
         totalIncome - totalExpense
     }
     
+    // MARK: - 當月統計功能
+    
+    // 獲取當月第一天和最後一天
+    private var currentMonthDateRange: (start: Date, end: Date) {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        // 當月第一天
+        let startOfMonth = calendar.dateInterval(of: .month, for: now)?.start ?? now
+        
+        // 當月最後一天
+        let endOfMonth = calendar.dateInterval(of: .month, for: now)?.end.addingTimeInterval(-1) ?? now
+        
+        return (startOfMonth, endOfMonth)
+    }
+    
+    // 格式化當月日期範圍顯示
+    var currentMonthDateRangeText: String {
+        let dateRange = currentMonthDateRange
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_TW")
+        formatter.dateFormat = "M月dd日"
+        
+        let startDateText = formatter.string(from: dateRange.start)
+        let endDateText = formatter.string(from: dateRange.end)
+        
+        return "\(startDateText) - \(endDateText)"
+    }
+    
+    // 當月總收入
+    var currentMonthIncome: Double {
+        let dateRange = currentMonthDateRange
+        return expenses.filter { expense in
+            expense.type == .income &&
+            expense.date >= dateRange.start &&
+            expense.date <= dateRange.end
+        }.reduce(0) { $0 + $1.amount }
+    }
+    
+    // 當月總支出
+    var currentMonthExpense: Double {
+        let dateRange = currentMonthDateRange
+        return expenses.filter { expense in
+            expense.type == .expense &&
+            expense.date >= dateRange.start &&
+            expense.date <= dateRange.end
+        }.reduce(0) { $0 + $1.amount }
+    }
+    
+    // 當月餘額
+    var currentMonthBalance: Double {
+        currentMonthIncome - currentMonthExpense
+    }
+    
+    // 格式化當月餘額 (考慮正負號和顏色)
+    var formattedCurrentMonthBalance: (text: String, color: Color) {
+        let balanceValue = currentMonthBalance
+        let formattedText = formatAmount(abs(balanceValue))
+        
+        if balanceValue > 0 {
+            return ("+\(formattedText)", .green)
+        } else if balanceValue < 0 {
+            return ("-\(formattedText)", .red)
+        } else {
+            return (formattedText, .primary)
+        }
+    }
+    
     // 根據類型篩選記錄
     func getExpenses(by type: TransactionType) -> [ExpenseRecord] {
         if type == .all {
@@ -306,20 +371,6 @@ class ExpenseDataManager: ObservableObject {
         }
     }
     
-    // MARK: - 示例資料 (用於開發測試)
-    func addSampleData() {
-        let sampleExpenses = [
-            ExpenseRecord(remark: "午餐", amount: 150, date: Date(), type: .expense, color: .red),
-            ExpenseRecord(remark: "薪水", amount: 35000, date: Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date(), type: .income, color: .green),
-            ExpenseRecord(remark: "咖啡", amount: 85, date: Calendar.current.date(byAdding: .hour, value: -2, to: Date()) ?? Date(), type: .expense, color: .orange),
-            ExpenseRecord(remark: "副業收入", amount: 2000, date: Calendar.current.date(byAdding: .day, value: -3, to: Date()) ?? Date(), type: .income, color: .blue)
-        ]
-        
-        for expense in sampleExpenses {
-            addExpense(expense)
-        }
-    }
-    
     // MARK: - 圖片儲存/讀取
     
     func saveImageData(_ data: Data) -> String? {
@@ -346,38 +397,6 @@ class ExpenseDataManager: ObservableObject {
         guard let filename = filename else { return }
         let url = imagesDirectoryURL.appendingPathComponent(filename)
         try? fileManager.removeItem(at: url)
-    }
-    
-    // MARK: - 產生兩個月的消費假資料
-    func addTwoMonthsOfFakeExpenses() {
-        guard !categories.isEmpty else { return }
-        let calendar = Calendar.current
-        let now = Date()
-        let remarks = ["早餐", "午餐", "晚餐", "超商", "交通", "飲料", "零食", "購物", "娛樂", "醫療", "房租", "水電", "網路", "薪水", "獎金", "投資"]
-        let expenseCategories = categories.filter { $0.type == .expense && !$0.isDefault }
-        let incomeCategories = categories.filter { $0.type == .income && !$0.isDefault }
-        var fakeExpenses: [ExpenseRecord] = []
-        for dayOffset in 0..<60 {
-            let date = calendar.date(byAdding: .day, value: -dayOffset, to: now) ?? now
-            let recordCount = Int.random(in: 1...3)
-            for _ in 0..<recordCount {
-                let isIncome = Bool.random() && !incomeCategories.isEmpty
-                let category = isIncome ? incomeCategories.randomElement()! : expenseCategories.randomElement()!
-                let amount = isIncome ? Double.random(in: 1000...50000).rounded() : Double.random(in: 30...1500).rounded()
-                let remark = remarks.randomElement()! + (isIncome ? "收入" : "支出")
-                let record = ExpenseRecord(
-                    remark: remark,
-                    amount: amount,
-                    date: date,
-                    type: category.type,
-                    color: category.color,
-                    categoryId: category.id
-                )
-                fakeExpenses.append(record)
-            }
-        }
-        self.expenses = fakeExpenses.sorted { $0.date > $1.date }
-        saveExpenses()
     }
 }
 
