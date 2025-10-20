@@ -11,7 +11,7 @@ import SwiftUI
 struct ExpenTacker2App: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainTabView()
         }
     }
 }

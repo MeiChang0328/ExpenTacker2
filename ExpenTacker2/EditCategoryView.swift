@@ -97,5 +97,13 @@ struct EditCategoryView: View {
 }
 
 #Preview {
-    EditCategoryView(dataManager: ExpenseDataManager(), category: ExpenseCategory(name: "餐飲", color: .red, type: .expense))
+    EditCategoryView(
+        dataManager: ExpenseDataManager(),
+        category: ExpenseCategory( // Creating an example category for preview
+            name: "餐飲",          // Example name
+            color: .red,          // Example color
+            type: .expense,       // Example type
+            iconName: "fork.knife" // *** Add this example icon name ***
+        )
+    )
 }

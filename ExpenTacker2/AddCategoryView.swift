@@ -15,6 +15,8 @@ struct AddCategoryView: View {
     @State private var selectedType: TransactionType = .expense
     @State private var selectedColor: Color = .blue
     
+    @State private var selectedIcon: String = "questionmark.circle"
+    
     var body: some View {
         NavigationView {
             Form {
@@ -91,15 +93,16 @@ struct AddCategoryView: View {
     }
     
     private func saveCategory() {
-        let newCategory = ExpenseCategory(
-            name: categoryName,
-            color: selectedColor,
-            type: selectedType
-        )
-        
-        dataManager.addCategory(newCategory)
-        dismiss()
-    }
+            let newCategory = ExpenseCategory(
+                name: categoryName,
+                color: selectedColor,
+                type: selectedType,
+                iconName: selectedIcon // *** Add this line using the selectedIcon state variable ***
+            )
+
+            dataManager.addCategory(newCategory)
+            dismiss()
+        }
 }
 
 #Preview {

@@ -20,6 +20,12 @@ struct AddExpenseView: View {
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
     @State private var selectedPhotoData: Data? = nil
     
+    init(dataManager: ExpenseDataManager, initialType: TransactionType = .expense) {
+            self.dataManager = dataManager
+            // 使用 _variable = State(initialValue:) 來設定 @State 變數的初始值
+            _selectedType = State(initialValue: initialType)
+    }
+    
     var body: some View {
         NavigationView {
             Form {
@@ -27,16 +33,15 @@ struct AddExpenseView: View {
                     // 交易類型選擇
                     HStack {
                         Text("類型")
+                            .foregroundColor(.secondary) // 標示為資訊
                         Spacer()
-                        Picker("類型", selection: $selectedType) {
-                            Text("收入").tag(TransactionType.income)
-                            Text("支出").tag(TransactionType.expense)
-                        }
-                        .pickerStyle(SegmentedPickerStyle())
-                        .frame(width: 150)
-                        .onChange(of: selectedType) { _, _ in
-                            selectedCategoryId = nil
-                        }
+                        Text(selectedType.displayName) // 直接顯示傳入的類型名稱
+                            .font(.headline)
+                            .padding(.vertical, 5)
+                            .padding(.horizontal, 15)
+                            .background(selectedType == .income ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
+                            .foregroundColor(selectedType == .income ? .green : .red)
+                            .cornerRadius(8)
                     }
                     
                     // 金額輸入

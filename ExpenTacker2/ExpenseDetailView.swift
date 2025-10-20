@@ -1,3 +1,10 @@
+//
+//  ExpenseDetailView.swift
+//  ExpenTacker2
+//
+//  Created by 張郁眉 on 2025/10/1. (假設)
+//
+
 import SwiftUI
 
 struct ExpenseDetailView: View {
