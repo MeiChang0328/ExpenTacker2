@@ -11,7 +11,7 @@ import PhotosUI
 struct AddExpenseView: View {
     let dataManager: ExpenseDataManager
     @Environment(\.dismiss) private var dismiss
-    
+     
     @State private var amount = ""
     @State private var remark = ""
     @State private var selectedType: TransactionType = .expense
