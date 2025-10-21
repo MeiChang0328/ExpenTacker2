@@ -17,29 +17,74 @@ struct ContentView: View {
     @State private var showingEditExpense = false
     @State private var editingExpense: ExpenseRecord? = nil
     
+    @State private var displayedDate: Date = Date()
+    
     var body: some View {
         NavigationView {
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 20) {
-                    // 歡迎標題區域
-                    welcomeHeaderSection
-                    
-                    // 統計卡片區域
-                    expenseCardSection
-                    
-                    // 交易明細區域
-                    transactionsSection
+            ZStack {
+                Color.white.ignoresSafeArea()
+                
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 20) {
+                        // 歡迎標題區域
+                        welcomeHeaderSection
+                        
+                        // 統計卡片區域
+                        expenseCardSection
+                        
+                        // 交易明細區域
+                        transactionsSection
+                    }
+                    .padding()
+                    .padding(.bottom, 80)
                 }
-                .padding()
             }
-            .background {
-                Color(.systemGroupedBackground)
-                    .ignoresSafeArea()
-            }
-            .navigationBarHidden(true)
-            // 浮動新增按鈕
-            .overlay(alignment: .bottomTrailing) {
-                floatingAddButton
+            
+            .background (Color(.systemGroupedBackground))
+            .navigationBarHidden(false)
+            .toolbar {
+                ToolbarItemGroup(placement: .bottomBar) {
+                    HStack(spacing: 24) {
+                        Spacer(minLength: 0)
+                        Button {
+                            // 新增消費 action
+                            showingAddExpense = true
+                        } label: {
+                            VStack {
+                                Image(systemName: "plus.circle")
+                                Text("新增消費")
+                            }
+                        }
+                        Spacer()
+                        Button {
+                            // 消費分析 action
+                            showingExpenseList = true
+                        } label: {
+                            VStack {
+                                Image(systemName: "chart.bar")
+                                Text("消費分析")
+                            }
+                        }
+                        Spacer()
+                        Button {
+                            // 分類管理 action
+                            showingCategories = true
+                        } label: {
+                            VStack {
+                                Image(systemName: "folder")
+                                Text("分類管理")
+                            }
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        Color.white
+                            .ignoresSafeArea(edges: .bottom)
+                    )
+                }
             }
         }
         .sheet(isPresented: $showingAddExpense) {
@@ -47,9 +92,6 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingExpenseList) {
             ExpenseListView(dataManager: dataManager)
-        }
-        .sheet(isPresented: $showingCategories) {
-            CategoryManagementView(dataManager: dataManager)
         }
         .sheet(isPresented: $showingAddCategory) {
             AddCategoryView(dataManager: dataManager)
@@ -67,6 +109,9 @@ struct ContentView: View {
         } message: {
             Text("你想要做什麼？")
         }
+        .sheet(isPresented: $showingCategories) {
+            CategoryManagementView(dataManager: dataManager)
+        }
     }
     
     // MARK: - 歡迎標題區域
@@ -82,21 +127,6 @@ struct ContentView: View {
                     .font(.title2.bold())
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            
-            Button(action: {
-                showingCategories = true
-            }) {
-                Image(systemName: "gear.circle.fill")
-                    .foregroundColor(.gray)
-                    .overlay(content: {
-                        Circle()
-                            .stroke(.white, lineWidth: 2)
-                            .padding(7)
-                    })
-                    .frame(width: 40, height: 40)
-                    .background(Color.white, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    .shadow(color: .black.opacity(0.1), radius: 5, x: 5, y: 5)
-            }
         }
     }
     
@@ -193,29 +223,53 @@ struct ContentView: View {
         .padding(.top)
     }
     
-    // MARK: - 浮動新增按鈕
-    private var floatingAddButton: some View {
-        Button {
-            showingActionMenu = true
-        } label: {
-            Image(systemName: "plus")
-                .font(.system(size: 25, weight: .medium))
-                .foregroundColor(.white)
-                .frame(width: 55, height: 55)
-                .background {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [.blue, .purple, .pink],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+    // MARK: - 月份選擇器 UI (NEW)
+        private var monthSelectorSection: some View {
+            HStack(spacing: 20) {
+                Button {
+                    changeMonth(by: -1)
+                } label: {
+                    Image(systemName: "chevron.left.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.blue.opacity(0.8))
                 }
-                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                
+                Text(formattedDisplayedMonth)
+                    .font(.title2.bold())
+                    .frame(minWidth: 160) // 確保有足夠寬度
+                
+                Button {
+                    changeMonth(by: 1)
+                } label: {
+                    Image(systemName: "chevron.right.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.blue.opacity(0.8))
+                }
+            }
+            .padding(.horizontal)
         }
-        .padding()
-    }
+        
+        // MARK: - Helper Properties & Functions (NEW)
+        
+        /// 將 displayedDate 格式化為 "YYYY年 MMMM"
+        private var formattedDisplayedMonth: String {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy年 MMMM"
+            formatter.locale = Locale(identifier: "zh_Hant_TW") // 假設為繁體中文
+            return formatter.string(from: displayedDate)
+        }
+        
+        /// 根據給定的月份數更改 displayedDate
+        private func changeMonth(by amount: Int) {
+            if let newDate = Calendar.current.date(byAdding: .month, value: amount, to: displayedDate) {
+                displayedDate = newDate
+                
+                // **未來實作提示**:
+                // 在這裡，你應該呼叫 dataManager 來更新數據
+                // 例如: dataManager.fetchData(for: displayedDate)
+                // 這樣 dataManager.currentMonthDateRangeText 和其他統計數據才會更新
+            }
+        }
 }
 
 // MARK: - 改進的統計卡片組件
@@ -374,3 +428,5 @@ struct EmptyStateView: View {
 #Preview {
     ContentView()
 }
+
+//test
