@@ -60,11 +60,11 @@ struct ExpenseListView: View {
 
     var body: some View {
         NavigationView {
-            // 使用 VStack 包裹 ScrollView 以便使用 Spacer
+            // *** 在這個 VStack 加入 padding ***
             VStack(spacing: 0) {
                 // 1. 頂部篩選器
                 topFilterBar
-                    .padding(.top, 10) // 製造 Header 和 Bar 的間距
+                    // *** --- 移除這裡的 .padding(.top, 10) --- ***
 
                 // ScrollView 包含主要內容
                 ScrollView {
@@ -85,13 +85,19 @@ struct ExpenseListView: View {
                 // Spacer 將內容推到上方，製造底部空白
                 Spacer()
             }
-            .background(Color(.systemGroupedBackground).ignoresSafeArea())
+            // *** --- 將頂部間距加在這裡 --- ***
+            .padding(.top, 20) // <<< 與 BudgetView/ShoppingListView 一致的頂部間距
+            // *** --- 修改背景色 --- ***
+            .background(Color.white.ignoresSafeArea()) // <<< 背景改為白色
             .navigationTitle("圖表")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline) // 確保 header 高度一致
+            .navigationBarColor(backgroundColor: Color.brandGold, titleColor: .white) // Header 顏色
             .sheet(isPresented: $showingCategoryManagement) {
                 CategoryManagementView(dataManager: dataManager)
             }
+            // 確保 Tab 選中時 Navigation Bar 顏色一致
             .onAppear {
+                 // 再次套用顏色設定
                 let appearance = UINavigationBarAppearance()
                 appearance.configureWithOpaqueBackground()
                 appearance.backgroundColor = UIColor(Color.brandGold)
@@ -99,7 +105,7 @@ struct ExpenseListView: View {
                 UINavigationBar.appearance().standardAppearance = appearance
                 UINavigationBar.appearance().scrollEdgeAppearance = appearance
                 UINavigationBar.appearance().compactAppearance = appearance
-                UINavigationBar.appearance().tintColor = .white
+                UINavigationBar.appearance().tintColor = .white // Back button
             }
         }
     }
@@ -122,11 +128,8 @@ struct ExpenseListView: View {
             }
         }
         .padding(.horizontal)
-        // *** --- 加入這一行，增加頂部間距 --- ***
-        
-        .padding(.vertical, 8)
-        .background(Color(.systemBackground))
-        .overlay(Divider(), alignment: .bottom)
+        // *** --- 微調垂直 Padding 使其在背景內置中 --- ***
+        .padding(.vertical, 10) // <<< 上下各 10，使其垂直居中
     }
 
     // MARK: - 圖表區域
@@ -163,9 +166,9 @@ struct ExpenseListView: View {
                  } label: {
                      Text("分類管理")
                          .font(.caption)
-                         .foregroundColor(.blue) // 藍色表示可點擊
+                         .foregroundColor(.blue)
                  }
-                 .frame(maxWidth: .infinity, alignment: .trailing) // 靠右
+                 .frame(maxWidth: .infinity, alignment: .trailing)
 
                 Spacer(minLength: 30) // 往下推
 

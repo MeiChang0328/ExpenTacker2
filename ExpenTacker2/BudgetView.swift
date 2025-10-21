@@ -60,12 +60,15 @@ struct BudgetView: View {
                         }
                     }
                 }
-                .listStyle(.insetGrouped)
+                .listStyle(.plain)
                 .background(Color.white)
             }
-            .padding(.top, 10) // 您可以調整 10 這個數值
+            .padding(.top, 25) // 您可以調整 10 這個數值
             .background(Color.white.ignoresSafeArea())
             .navigationTitle("預算")
+            // *** --- 加入這一行，設定為 inline 樣式 --- ***
+            .navigationBarTitleDisplayMode(.inline)
+            // *** --- 加入結束 --- ***
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {

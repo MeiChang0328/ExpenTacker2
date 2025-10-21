@@ -27,19 +27,18 @@ struct ShoppingListView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .padding(.horizontal) // 原有的水平 padding
-                .padding(.bottom)     // 加上底部 padding，讓 Picker 和 List 分開
+                .padding(.horizontal) // 水平 padding
+                .padding(.bottom)     // 底部 padding
                 .tint(Color.brandGold)
 
                 List {
-                    // ... (List 內容不變) ...
                     if selectedList == .shopping {
                         ForEach($dataManager.shoppingItems) { $item in
                             ItemRowView(item: $item) { dataManager.updateShoppingItem(item) }
                                 .listRowSeparator(.hidden)
-                                .listRowInsets(EdgeInsets())
-                                .padding(.horizontal)
-                                .padding(.vertical, 8) // 自訂行高
+                                .listRowInsets(EdgeInsets()) // 移除 List 預設的 Row 邊距
+                                .padding(.horizontal)      // 自己加水平邊距
+                                .padding(.vertical, 8)     // 自己加垂直邊距 (行高)
                         }
                         .onDelete(perform: dataManager.deleteShoppingItem)
                     } else {
@@ -48,21 +47,21 @@ struct ShoppingListView: View {
                                 .listRowSeparator(.hidden)
                                 .listRowInsets(EdgeInsets())
                                 .padding(.horizontal)
-                                .padding(.vertical, 8) // 自訂行高
+                                .padding(.vertical, 8)
                         }
                         .onDelete(perform: dataManager.deleteTodoItem)
                     }
                 }
-                .listStyle(.plain)
-                .background(Color.white)
+                .listStyle(.plain) // 使用 Plain 樣式
+                .background(Color.white) // List 背景白色
             }
-             // *** --- 加入這一行，增加頂部間距 --- ***
-            .padding(.top, 10) // 與 BudgetView 一致
-             // *** --- 加入結束 --- ***
-            .background(Color.white.ignoresSafeArea())
+            // *** --- 加入這一行，增加頂部間距 --- ***
+            .padding(.top, 25) // 與 BudgetView 一致
+            // *** --- 加入結束 --- ***
+            .background(Color.white.ignoresSafeArea()) // 整個背景白色
             .navigationTitle("清單") // Navigation Bar 標題
-             // *** 修改：確保 Navigation Bar 顏色正確 ***
-            .navigationBarColor(backgroundColor: Color.brandGold, titleColor: .white)
+            .navigationBarTitleDisplayMode(.inline) // *** 確保 Header 高度一致 ***
+            .navigationBarColor(backgroundColor: Color.brandGold, titleColor: .white) // Header 顏色
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
@@ -70,14 +69,14 @@ struct ShoppingListView: View {
                     } label: {
                         Image(systemName: "plus")
                     }
-                     .foregroundColor(.white) // *** 修改：Toolbar 按鈕改為白色 ***
+                     .foregroundColor(.white) // Toolbar 按鈕白色
                 }
             }
             .sheet(isPresented: $showingAddItem) {
                 AddItemView(dataManager: dataManager, listType: selectedList)
             }
         }
-         // *** 修改：確保 Tab 選中時 Navigation Bar 顏色一致 ***
+        // *** 確保 Tab 選中時 Navigation Bar 顏色一致 ***
         .onAppear {
              // 再次套用顏色設定
             let appearance = UINavigationBarAppearance()
@@ -94,7 +93,6 @@ struct ShoppingListView: View {
 
 // MARK: - ItemRowView (不變)
 struct ItemRowView<T: Identifiable>: View {
-    // ... (ItemRowView 程式碼保持不變) ...
      @Binding var item: T; var onToggle: () -> Void
     private var name: String; private var isCompleted: Binding<Bool>; private var iconName: String
     init(item: Binding<T>, onToggle: @escaping () -> Void) {
@@ -103,7 +101,7 @@ struct ItemRowView<T: Identifiable>: View {
             self.name = shoppingItem.name; self.iconName = "bag.fill"
             self.isCompleted = Binding(get: { (item.wrappedValue as! ShoppingItem).isCompleted }, set: { nv in if var temp = item.wrappedValue as? ShoppingItem { temp.isCompleted = nv; item.wrappedValue = temp as! T } })
         } else if let todoItem = item.wrappedValue as? TodoItem {
-            self.name = todoItem.name; self.iconName = "person.fill" // Or maybe "checkmark.square"?
+            self.name = todoItem.name; self.iconName = "person.fill"
             self.isCompleted = Binding(get: { (item.wrappedValue as! TodoItem).isCompleted }, set: { nv in if var temp = item.wrappedValue as? TodoItem { temp.isCompleted = nv; item.wrappedValue = temp as! T } })
         } else { self.name = "??"; self.iconName = "?"; self.isCompleted = .constant(false) }
     }
@@ -116,7 +114,7 @@ struct ItemRowView<T: Identifiable>: View {
                 Image(systemName: isCompleted.wrappedValue ? "checkmark.circle.fill" : "circle").foregroundColor(isCompleted.wrappedValue ? Color.brandGold : .secondary).font(.title2)
                     .onTapGesture { isCompleted.wrappedValue.toggle(); onToggle() }
             }
-            .padding(.vertical, 12).padding(.leading, 15) // Adjusted padding slightly
+            .padding(.vertical, 12).padding(.leading, 15)
             .contentShape(Rectangle())
             .onTapGesture { isCompleted.wrappedValue.toggle(); onToggle() }
             Divider().padding(.leading, 55)
