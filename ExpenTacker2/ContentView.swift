@@ -22,7 +22,7 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color.white.ignoresSafeArea()
+                Color.white.ignoresSafeArea(edges: .all)
                 
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 20) {
@@ -40,7 +40,7 @@ struct ContentView: View {
                 }
             }
             
-            .background (Color(.systemGroupedBackground))
+            // 移除 .background (Color(.systemGroupedBackground))，避免覆蓋白色
             .navigationBarHidden(false)
             .toolbar {
                 ToolbarItemGroup(placement: .bottomBar) {
@@ -80,12 +80,11 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
-                    .background(
-                        Color.white
-                            .ignoresSafeArea(edges: .bottom)
-                    )
                 }
             }
+            
+            .toolbarBackground(Color.white, for: .bottomBar)
+            .toolbarBackground(.visible, for: .bottomBar)
         }
         .sheet(isPresented: $showingAddExpense) {
             AddExpenseView(dataManager: dataManager)
@@ -190,12 +189,6 @@ struct ContentView: View {
                     .font(.title2.bold())
                     .opacity(0.7)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                
-                Button("查看消費") {
-                    showingExpenseList = true
-                }
-                .font(.subheadline)
-                .foregroundColor(.blue)
             }
             .padding(.bottom, 5)
             
