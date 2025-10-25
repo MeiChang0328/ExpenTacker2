@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var dataManager = ExpenseDataManager()
+    @EnvironmentObject var dataManager: ExpenseDataManager
     @State private var showingAddExpense = false
     @State private var showingExpenseList = false
     @State private var showingCategories = false

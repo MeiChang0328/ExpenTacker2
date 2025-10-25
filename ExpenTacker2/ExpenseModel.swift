@@ -160,3 +160,44 @@ struct ExpenseCategory: Identifiable, Codable, Hashable {
         ExpenseCategory(name: "其他支出", color: .gray, type: .expense)
     ]
 }
+
+// MARK: - Widget 支援
+struct ExpenseRecordWidget: Codable {
+    let id: String
+    let amount: Double
+    let date: Date
+    let type: String
+    let remark: String
+    let categoryName: String
+    let categoryColor: ColorComponents
+}
+
+struct ColorComponents: Codable {
+    let red: Double
+    let green: Double
+    let blue: Double
+    let alpha: Double
+    
+    var color: Color {
+        Color(red: red, green: green, blue: blue, opacity: alpha)
+    }
+}
+
+extension Color {
+    func toColorComponents() -> ColorComponents {
+        let uiColor = UIColor(self)
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+        
+        uiColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        
+        return ColorComponents(
+            red: Double(red),
+            green: Double(green),
+            blue: Double(blue),
+            alpha: Double(alpha)
+        )
+    }
+}

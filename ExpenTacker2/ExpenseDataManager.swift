@@ -44,7 +44,9 @@ class ExpenseDataManager: ObservableObject {
     init() {
         loadCategories()
         loadExpenses()
-        // 移除自動產生假資料的程式碼
+        // 同步數據到 Widget
+        syncExpensesToWidget()
+        WidgetCenter.shared.reloadAllTimelines()
     }
     
     // MARK: - 分類管理
@@ -178,10 +180,23 @@ class ExpenseDataManager: ObservableObject {
         guard let userDefaults = UserDefaults(suiteName: groupID) else { return }
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
-        // Map ExpenseRecord to ExpenseRecordWidget
+        
+        // Map ExpenseRecord to ExpenseRecordWidget with enhanced data
         let widgetRecords = expenses.map { exp in
-            ExpenseRecordWidget(amount: exp.amount, date: exp.date, type: exp.type.rawValue)
+            let category = getCategory(by: exp.categoryId)
+            let colorComponents = exp.color.toColorComponents()
+            
+            return ExpenseRecordWidget(
+                id: exp.id.uuidString,
+                amount: exp.amount,
+                date: exp.date,
+                type: exp.type.rawValue,
+                remark: exp.remark,
+                categoryName: category.name,
+                categoryColor: colorComponents
+            )
         }
+        
         if let data = try? encoder.encode(widgetRecords) {
             userDefaults.set(data, forKey: "expenses")
         }
@@ -398,11 +413,12 @@ class ExpenseDataManager: ObservableObject {
         let url = imagesDirectoryURL.appendingPathComponent(filename)
         try? fileManager.removeItem(at: url)
     }
-}
-
-// Widget同步用的結構
-fileprivate struct ExpenseRecordWidget: Codable {
-    let amount: Double
-    let date: Date
-    let type: String // "expense" or "income"
+    
+    // MARK: - 強制同步 Widget 數據 (調試用)
+    func forceWidgetSync() {
+        print("強制同步 Widget 數據...")
+        syncExpensesToWidget()
+        WidgetCenter.shared.reloadAllTimelines()
+        print("Widget 數據同步完成")
+    }
 }
