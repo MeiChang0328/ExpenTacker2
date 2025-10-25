@@ -16,3 +16,14 @@ struct ConfigurationAppIntent: WidgetConfigurationIntent {
     @Parameter(title: "Favorite Emoji", default: "😃")
     var favoriteEmoji: String
 }
+
+struct RefreshExpenseIntent: AppIntent {
+    static var title: LocalizedStringResource = "刷新隨機消費"
+    static var description = IntentDescription("刷新顯示另一筆隨機消費記錄")
+    
+    func perform() async throws -> some IntentResult {
+        // 刷新 Widget 時間線
+        WidgetCenter.shared.reloadTimelines(ofKind: "ExpenTackerWidget")
+        return .result()
+    }
+}
