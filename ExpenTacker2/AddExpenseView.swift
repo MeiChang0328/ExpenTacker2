@@ -1,213 +1,215 @@
 //
 //  AddExpenseView.swift
-//  ExpenTacker2
+//  ExpenTacker
 //
 //  Created by 張郁眉 on 2025/10/1.
+//
+//  --- FINAL VERSION (Oct 27 - Updated Button Style: Substrate Bg, Gold Border) ---
 //
 
 import SwiftUI
 import PhotosUI
 
 struct AddExpenseView: View {
+    // State variables and Environment properties
     let dataManager: ExpenseDataManager
     @Environment(\.dismiss) private var dismiss
     
     @State private var amount = ""
-    @State private var remark = ""
+    @State private var remark = "" // Internal name for "項目名稱"
     @State private var selectedType: TransactionType = .expense
     @State private var selectedDate = Date()
     @State private var selectedCategoryId: String? = nil
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
     @State private var selectedPhotoData: Data? = nil
     
+    // Calculated property for available categories
+    private var availableCategories: [ExpenseCategory] {
+        dataManager.getCategories(for: selectedType).filter { !$0.isDefault }
+    }
+
     var body: some View {
-        NavigationView {
-            Form {
-                Section("交易資訊") {
-                    // 交易類型選擇
-                    HStack {
-                        Text("類型")
-                        Spacer()
-                        Picker("類型", selection: $selectedType) {
-                            Text("收入").tag(TransactionType.income)
-                            Text("支出").tag(TransactionType.expense)
-                        }
-                        .pickerStyle(SegmentedPickerStyle())
-                        .frame(width: 150)
-                        .onChange(of: selectedType) { _, _ in
-                            selectedCategoryId = nil
-                        }
-                    }
-                    
-                    // 金額輸入
-                    HStack {
-                        Text("金額")
-                        TextField("請輸入金額", text: $amount)
-                            .keyboardType(.decimalPad)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                    }
-                    
-                    // 備註輸入
-                    HStack {
-                        Text("備註")
-                        TextField("請輸入備註", text: $remark)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                    }
-                    
-                    // 日期選擇
-                    DatePicker("日期", selection: $selectedDate, displayedComponents: .date)
-                }
+        // Main container using ZStack to layer background and content
+        ZStack {
+            Color.pageBackground.ignoresSafeArea()
+
+            VStack(spacing: 0) { // Main VStack controlling vertical layout
                 
-                Section("分類選擇") {
-                    // 以下拉選單選擇分類（含無分類）
-                    let availableCategories = dataManager.getCategories(for: selectedType)
-                        .filter { !$0.isDefault } // 避免與「無分類」重複
-                    
-                    Picker("分類", selection: $selectedCategoryId) {
-                        // 無分類
-                        HStack {
-                            Circle().fill(Color.gray).frame(width: 12, height: 12)
-                            Text("無分類")
+                // MARK: - Custom Header
+                ZStack {
+                    Color.cardBackground // Header uses cardBackground #2D3044
+                    Text("新增紀錄")
+                        .foregroundColor(.primaryText) // White #FFFFFF
+                        .font(.system(size: 16, weight: .bold))
+                }
+                .frame(height: 48) // Fixed header height
+
+                // MARK: - Scrollable Form Content
+                ScrollView {
+                    // Set spacing to 25 for inter-section spacing
+                    VStack(alignment: .leading, spacing: 25) { // Add alignment: .leading
+
+                        // MARK: - Transaction Info Section
+                        // Set spacing to 20 for title <-> card
+                        VStack(alignment: .leading, spacing: 20) { // Keep leading alignment
+                            Text("交易資訊")
+                                .font(.headline) // Or adjust size as needed
+                                .foregroundColor(.primaryText.opacity(0.9))
+                                .padding(.horizontal) // Align title with card edge
+
+                            // The Card itself - Now with updated rows inside
+                            transactionInfoCard
                         }
-                        .tag(String?.none)
+                        // Padding handled by outer VStack
+
+                        // MARK: - Photo Section
+                        // Set spacing to 20 for title <-> card
+                        VStack(alignment: .leading, spacing: 20) { // Keep leading alignment
+                             Text("照片")
+                                .font(.headline)
+                                .foregroundColor(.primaryText.opacity(0.9))
+                                .padding(.horizontal)
+
+                             photoCard // Extracted photo section content
+                         }
+                         // Padding handled by outer VStack
                         
-                        // 其他分類
-                        ForEach(availableCategories) { category in
-                            HStack {
-                                Circle().fill(category.color).frame(width: 12, height: 12)
-                                Text(category.name)
-                            }
-                            .tag(Optional(category.id))
-                        }
-                    }
-                    .pickerStyle(MenuPickerStyle())
+                    } // End ScrollView Content VStack
+                    .padding(.horizontal) // Add horizontal padding to the ScrollView content VStack
+                    .padding(.vertical, 20) // Add padding above/below scrollable content
+                } // End ScrollView
+
+                // MARK: - Bottom Buttons (Updated Style)
+                HStack(spacing: 20) {
+                    Button("關閉") { dismiss() }
+                        .frame(width: 96, height: 60)
+                        // **[修改]** Use substrate background
+                        .background(Color.substrateBackground)
+                        .foregroundColor(.primaryText) // Keep white text
+                        .cornerRadius(8)
+                        // **[新增]** Add gold border overlay
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.brandGold, lineWidth: 1) // Gold border, 1px width
+                        )
+
+                    Button("儲存") { saveExpense() }
+                        .frame(width: 96, height: 60)
+                        // **[修改]** Use substrate background
+                        .background(Color.substrateBackground)
+                        .foregroundColor(.primaryText) // Keep white text
+                        .cornerRadius(8)
+                        // **[新增]** Add gold border overlay
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.brandGold, lineWidth: 1) // Gold border, 1px width
+                        )
+                        .disabled(amount.isEmpty || Double(amount) == nil)
                 }
-                
-                Section("照片（可選）") {
-                    PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                        HStack {
-                            Image(systemName: "photo")
-                                .foregroundColor(.blue)
-                            Text(selectedPhotoData == nil ? "選擇照片" : "已選擇照片")
-                                .foregroundColor(selectedPhotoData == nil ? .blue : .green)
-                        }
-                    }
-                    .onChange(of: selectedPhotoItem) { _, newItem in
-                        Task {
-                            if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                                selectedPhotoData = data
-                            }
-                        }
-                    }
-                    
-                    if let photoData = selectedPhotoData,
-                       let uiImage = UIImage(data: photoData) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: 200)
-                            .cornerRadius(10)
-                        
-                        Button(role: .destructive) {
-                            selectedPhotoData = nil
-                            selectedPhotoItem = nil
-                        } label: {
-                            Label("移除照片", systemImage: "trash")
-                        }
-                    }
-                }
-                
-                Section("預覽") {
-                    previewSection
-                }
-            }
-            // **[新增]** 設定背景色
+                .padding(.vertical)
+                .frame(maxWidth: .infinity) // Center buttons
+                .background(Color.pageBackground)
+
+            } // End Main VStack
             .background(Color.pageBackground.ignoresSafeArea())
-            .scrollContentBackground(.hidden)
-            //
-            .navigationTitle("新增記錄")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("取消") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("儲存") {
-                        saveExpense()
-                    }
-                    .disabled(amount.isEmpty || Double(amount) == nil)
-                }
-            }
-        }
+            .preferredColorScheme(.dark)
+        } // End ZStack
+    } // End body
+    
+    // MARK: - Transaction Info Card View
+    private var transactionInfoCard: some View {
+        VStack(alignment: .leading, spacing: 15) { // Row spacing
+            // Income/Expense Picker Row
+            HStack {
+                Text("請選擇").foregroundColor(.primaryText.opacity(0.8)).frame(width: 60, alignment: .leading)
+                Picker("類型", selection: $selectedType) {
+                    Text("收入").tag(TransactionType.income)
+                    Text("支出").tag(TransactionType.expense)
+                }.pickerStyle(SegmentedPickerStyle()).onChange(of: selectedType) { _, _ in selectedCategoryId = nil }
+            }.frame(height: 60).padding(.horizontal)
+            // Category Picker Row
+            HStack {
+                Text("類型").foregroundColor(.primaryText.opacity(0.8)).frame(width: 60, alignment: .leading)
+                Picker("類型", selection: $selectedCategoryId) {
+                    Text("請選擇").tag(String?.none)
+                    ForEach(availableCategories) { category in Text(category.name).tag(Optional(category.id)) }
+                }.pickerStyle(MenuPickerStyle()).accentColor(.primaryText.opacity(0.8)).frame(maxWidth: .infinity, alignment: .trailing)
+            }.frame(height: 60).padding(.horizontal)
+            // Item Name Row
+            HStack {
+                Text("項目名稱").foregroundColor(.primaryText.opacity(0.8)).frame(width: 60, alignment: .leading)
+                TextField("", text: $remark, prompt: Text("請輸入項目名稱").foregroundColor(.gray.opacity(0.5))).foregroundColor(.primaryText).textFieldStyle(.plain).padding(.vertical, 8).padding(.horizontal, 5).overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.gray.opacity(0.5), lineWidth: 1))
+            }.frame(height: 60).padding(.horizontal)
+            // Amount Row
+            HStack {
+                Text("金額").foregroundColor(.primaryText.opacity(0.8)).frame(width: 60, alignment: .leading)
+                TextField("", text: $amount, prompt: Text("請輸入金額").foregroundColor(.gray.opacity(0.5))).foregroundColor(.primaryText).keyboardType(.decimalPad).textFieldStyle(.plain).padding(.vertical, 8).padding(.horizontal, 5).overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.gray.opacity(0.5), lineWidth: 1))
+            }.frame(height: 60).padding(.horizontal)
+            // Date Row
+            HStack {
+                Text("日期").foregroundColor(.primaryText.opacity(0.8)).frame(width: 60, alignment: .leading)
+                DatePicker("", selection: $selectedDate, displayedComponents: .date).labelsHidden().accentColor(.brandGold).padding(.vertical, 8).padding(.horizontal, 5).overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.gray.opacity(0.5), lineWidth: 1)).frame(maxWidth: .infinity, alignment: .leading)
+            }.frame(height: 60).padding(.horizontal)
+        } // End Card VStack
+        .padding(.vertical, 15)
+        .frame(width: 350) // Fixed width
+        .background(Color.substrateBackground)
+        .cornerRadius(4)
+        .overlay( // Left border
+            HStack { Rectangle().fill(Color.brandGold).frame(width: 3); Spacer() }
+        )
+        .clipped()
     }
     
-    private var previewSection: some View {
-        HStack {
-            let category = dataManager.getCategory(by: selectedCategoryId)
-            
-            Circle()
-                .fill(category.color)
-                .frame(width: 40, height: 40)
-                .overlay(
-                    Image(systemName: selectedType == .income ? "plus" : "minus")
-                        .font(.title3)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                )
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(remark.isEmpty ? "備註內容" : remark)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(remark.isEmpty ? .secondary : .primary)
-                
-                Text(category.name)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-            
-            VStack(alignment: .trailing) {
-                Text(formatPreviewAmount())
-                    .font(.callout)
-                    .fontWeight(.bold)
-                    .foregroundColor(selectedType == .income ? .green : .red)
-                
-                Text(selectedDate.formatted(date: .abbreviated, time: .omitted))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-        }
-        .padding(.vertical, 5)
+    // MARK: - Photo Card View
+    private var photoCard: some View {
+         HStack(spacing: 15) {
+             Image(systemName: "xmark")
+                 .font(.largeTitle)
+                 .foregroundColor(.secondary)
+                 .frame(width: 80, height: 80)
+                 .background(Color.gray.opacity(0.2))
+                 .clipShape(RoundedRectangle(cornerRadius: 8))
+                 .overlay {
+                     if let photoData = selectedPhotoData, let uiImage = UIImage(data: photoData) {
+                         Image(uiImage: uiImage)
+                             .resizable().scaledToFill()
+                             .frame(width: 80, height: 80).clipShape(RoundedRectangle(cornerRadius: 8)).clipped()
+                     }
+                 }
+
+             PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                 Text("選擇照片").foregroundColor(.blue)
+             }
+             .onChange(of: selectedPhotoItem) { _, newItem in
+                 Task {
+                     if let data = try? await newItem?.loadTransferable(type: Data.self) {
+                         selectedPhotoData = data
+                     } else {
+                         selectedPhotoData = nil
+                     }
+                 }
+             }
+             Spacer()
+             if selectedPhotoData != nil {
+                 Button(role: .destructive) {
+                     selectedPhotoData = nil; selectedPhotoItem = nil
+                 } label: { Image(systemName: "trash") }
+                 .padding(.leading)
+             }
+         }
+         .padding()
+         .background(Color.substrateBackground.opacity(0.5))
+         .cornerRadius(4)
+         .frame(width: 350) // Match transaction card width
     }
-    
-    private func formatPreviewAmount() -> String {
-        guard let amountValue = Double(amount) else {
-            return selectedType == .expense ? "-NT$0" : "+NT$0"
-        }
-        
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "TWD"
-        formatter.maximumFractionDigits = 0
-        
-        let prefix = selectedType == .expense ? "-" : "+"
-        let formattedNumber = formatter.string(from: NSNumber(value: amountValue)) ?? "NT$0"
-        
-        return prefix + formattedNumber
-    }
-    
+
+    // MARK: - Save Expense Function
     private func saveExpense() {
         guard let amountValue = Double(amount) else { return }
-        
         let category = dataManager.getCategory(by: selectedCategoryId)
-        
-        // 儲存照片（如果有選擇）
         var photoFilename: String? = nil
+        
         if let photoData = selectedPhotoData {
             photoFilename = dataManager.saveImageData(photoData)
         }
@@ -227,7 +229,20 @@ struct AddExpenseView: View {
     }
 }
 
+// MARK: - Fileprivate Helper Extensions (Photo Helpers Only)
+fileprivate extension AddExpenseView {
+    @ViewBuilder func photoOverlay() -> some View { /* ... */ }
+    func loadPhotoData(newItem: PhotosPickerItem?) { /* ... */ }
+    func removePhoto() { /* ... */ }
+}
+
+// Preview
 #Preview {
     AddExpenseView(dataManager: ExpenseDataManager())
-        .preferredColorScheme(.dark) // **[新增]**
+        .preferredColorScheme(.dark)
 }
+
+// --- Color Extension Placeholder (Assume exists in Color+Extensions.swift) ---
+/*
+ extension Color { ... }
+ */
