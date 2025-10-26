@@ -120,7 +120,7 @@ struct EditExpenseView: View {
             .background(Color.pageBackground.ignoresSafeArea())
             .scrollContentBackground(.hidden)
             //
-            .navigationTitle("編輯記錄")
+            .navigationTitle("編輯明細")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {

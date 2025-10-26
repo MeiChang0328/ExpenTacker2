@@ -4,7 +4,7 @@
 //
 //  Created by 張郁眉 on 2025/10/1.
 //
-//  --- FINAL VERSION (Oct 27 - Updated Button Style: Substrate Bg, Gold Border) ---
+//  --- FINAL VERSION (Oct 27 - Final Layout Spacing & Button Style) ---
 //
 
 import SwiftUI
@@ -83,11 +83,11 @@ struct AddExpenseView: View {
                 HStack(spacing: 20) {
                     Button("關閉") { dismiss() }
                         .frame(width: 96, height: 60)
-                        // **[修改]** Use substrate background
+                        // Use substrate background
                         .background(Color.substrateBackground)
                         .foregroundColor(.primaryText) // Keep white text
                         .cornerRadius(8)
-                        // **[新增]** Add gold border overlay
+                        // Add gold border overlay
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
                                 .stroke(Color.brandGold, lineWidth: 1) // Gold border, 1px width
@@ -95,11 +95,11 @@ struct AddExpenseView: View {
 
                     Button("儲存") { saveExpense() }
                         .frame(width: 96, height: 60)
-                        // **[修改]** Use substrate background
+                        // Use substrate background
                         .background(Color.substrateBackground)
                         .foregroundColor(.primaryText) // Keep white text
                         .cornerRadius(8)
-                        // **[新增]** Add gold border overlay
+                        // Add gold border overlay
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
                                 .stroke(Color.brandGold, lineWidth: 1) // Gold border, 1px width
@@ -116,9 +116,11 @@ struct AddExpenseView: View {
         } // End ZStack
     } // End body
     
-    // MARK: - Transaction Info Card View
+    // MARK: - Transaction Info Card View (Updated Row Styles)
     private var transactionInfoCard: some View {
-        VStack(alignment: .leading, spacing: 15) { // Row spacing
+        // Adjusted spacing, rows have fixed height now
+        VStack(alignment: .leading, spacing: 15) { // Spacing between rows
+            
             // Income/Expense Picker Row
             HStack {
                 Text("請選擇").foregroundColor(.primaryText.opacity(0.8)).frame(width: 60, alignment: .leading)
@@ -150,12 +152,13 @@ struct AddExpenseView: View {
                 Text("日期").foregroundColor(.primaryText.opacity(0.8)).frame(width: 60, alignment: .leading)
                 DatePicker("", selection: $selectedDate, displayedComponents: .date).labelsHidden().accentColor(.brandGold).padding(.vertical, 8).padding(.horizontal, 5).overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.gray.opacity(0.5), lineWidth: 1)).frame(maxWidth: .infinity, alignment: .leading)
             }.frame(height: 60).padding(.horizontal)
+
         } // End Card VStack
         .padding(.vertical, 15)
-        .frame(width: 350) // Fixed width
+        .frame(width: 350) // Keep width fixed
         .background(Color.substrateBackground)
         .cornerRadius(4)
-        .overlay( // Left border
+        .overlay( // Keep left border
             HStack { Rectangle().fill(Color.brandGold).frame(width: 3); Spacer() }
         )
         .clipped()
@@ -204,7 +207,7 @@ struct AddExpenseView: View {
          .frame(width: 350) // Match transaction card width
     }
 
-    // MARK: - Save Expense Function
+    // MARK: - Save Expense Function (Primary Definition)
     private func saveExpense() {
         guard let amountValue = Double(amount) else { return }
         let category = dataManager.getCategory(by: selectedCategoryId)
@@ -231,9 +234,31 @@ struct AddExpenseView: View {
 
 // MARK: - Fileprivate Helper Extensions (Photo Helpers Only)
 fileprivate extension AddExpenseView {
-    @ViewBuilder func photoOverlay() -> some View { /* ... */ }
-    func loadPhotoData(newItem: PhotosPickerItem?) { /* ... */ }
-    func removePhoto() { /* ... */ }
+    // Make overlay logic reusable
+    @ViewBuilder func photoOverlay() -> some View {
+        if let photoData = selectedPhotoData, let uiImage = UIImage(data: photoData) {
+            Image(uiImage: uiImage)
+                .resizable().scaledToFill()
+                .frame(width: 80, height: 80).clipShape(RoundedRectangle(cornerRadius: 8)).clipped()
+        }
+    }
+    
+    // Make task logic reusable
+    func loadPhotoData(newItem: PhotosPickerItem?) {
+         Task {
+             if let data = try? await newItem?.loadTransferable(type: Data.self) {
+                 selectedPhotoData = data
+             } else {
+                 selectedPhotoData = nil
+             }
+         }
+    }
+
+    // Make remove photo logic reusable
+    func removePhoto() {
+        selectedPhotoData = nil
+        selectedPhotoItem = nil
+    }
 }
 
 // Preview
@@ -243,6 +268,17 @@ fileprivate extension AddExpenseView {
 }
 
 // --- Color Extension Placeholder (Assume exists in Color+Extensions.swift) ---
+// Ensure Color+Extensions.swift is in your project and contains the necessary definitions.
 /*
- extension Color { ... }
- */
+ extension Color {
+     static let pageBackground = Color(hex: "#1A1D2E")
+     static let cardBackground = Color(hex: "#2D3044")
+     static let substrateBackground = Color(hex: "#293158")
+     static let primaryText = Color(hex: "#FFFFFF")
+     static let brandGold = Color(hex: "#F1B606")
+     static let highlightGreen = Color(hex: "#6FCF97")
+     static let highlightRed = Color(hex: "#EB5757")
+
+     init(hex: String) { ... }
+ }
+*/
