@@ -1,3 +1,10 @@
+//
+//  EditExpenseView.swift
+//  ExpenTacker2
+//
+//  Created by 張郁眉 on 2025/10/3.
+//
+
 import SwiftUI
 import PhotosUI
 
@@ -22,6 +29,8 @@ struct EditExpenseView: View {
         _selectedType = State(initialValue: expense.type)
         _selectedDate = State(initialValue: expense.date)
         _selectedCategoryId = State(initialValue: expense.categoryId)
+        // **[修復 Bug]** 初始化時載入現有照片
+        _selectedPhotoData = State(initialValue: dataManager.loadImageData(for: expense.photoFilename))
     }
     
     var body: some View {
@@ -77,7 +86,7 @@ struct EditExpenseView: View {
                         HStack {
                             Image(systemName: "photo")
                                 .foregroundColor(.blue)
-                            Text(selectedPhotoData == nil ? (expense.photoFilename == nil ? "選擇照片" : "已選擇照片") : "已選擇照片")
+                            Text(selectedPhotoData == nil ? "選擇照片" : "已選擇照片") // **[修改]** 簡化邏輯
                                 .foregroundColor(selectedPhotoData == nil ? .blue : .green)
                         }
                     }
@@ -88,8 +97,29 @@ struct EditExpenseView: View {
                             }
                         }
                     }
+                    
+                    // **[新增]** 顯示照片預覽 (無論是剛選的還是舊有的)
+                    if let photoData = selectedPhotoData,
+                       let uiImage = UIImage(data: photoData) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 200)
+                            .cornerRadius(10)
+                        
+                        Button(role: .destructive) {
+                            selectedPhotoData = nil
+                            selectedPhotoItem = nil
+                        } label: {
+                            Label("移除照片", systemImage: "trash")
+                        }
+                    }
                 }
             }
+            // **[新增]** 設定背景色
+            .background(Color.pageBackground.ignoresSafeArea())
+            .scrollContentBackground(.hidden)
+            //
             .navigationTitle("編輯記錄")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -111,9 +141,25 @@ struct EditExpenseView: View {
         updated.type = selectedType
         updated.date = selectedDate
         updated.categoryId = selectedCategoryId
+        
+        // **[修復]** 完整的照片儲存/刪除邏輯
         if let data = selectedPhotoData {
+            // 情況 1: 有照片資料 (新選的或舊有的)
+            // 刪除舊照片 (如果檔名不同)
+            if let oldFilename = expense.photoFilename, updated.photoFilename != oldFilename {
+                dataManager.deleteImage(filename: oldFilename)
+            }
+            // 儲存新照片 (saveImageData 會給新檔名)
             updated.photoFilename = dataManager.saveImageData(data)
+        } else {
+            // 情況 2: 照片資料是 nil (被用戶移除)
+            // 刪除舊照片 (如果存在)
+            if let oldFilename = expense.photoFilename {
+                dataManager.deleteImage(filename: oldFilename)
+            }
+            updated.photoFilename = nil
         }
+        
         dataManager.updateExpense(updated)
         dismiss()
     }
@@ -121,4 +167,5 @@ struct EditExpenseView: View {
 
 #Preview {
     EditExpenseView(dataManager: ExpenseDataManager(), expense: ExpenseRecord(remark: "午餐", amount: 100, date: Date(), type: .expense, color: .red))
+        .preferredColorScheme(ColorScheme.dark) // **[修復]**
 }

@@ -48,6 +48,10 @@ struct AddCategoryView: View {
                     previewSection
                 }
             }
+            // **[新增]** 設定背景色
+            .background(Color.pageBackground.ignoresSafeArea())
+            .scrollContentBackground(.hidden)
+            //
             .navigationTitle("新增分類")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -104,4 +108,5 @@ struct AddCategoryView: View {
 
 #Preview {
     AddCategoryView(dataManager: ExpenseDataManager())
+        .preferredColorScheme(.dark) // **[新增]**
 }

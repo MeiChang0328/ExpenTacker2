@@ -121,6 +121,10 @@ struct AddExpenseView: View {
                     previewSection
                 }
             }
+            // **[新增]** 設定背景色
+            .background(Color.pageBackground.ignoresSafeArea())
+            .scrollContentBackground(.hidden)
+            //
             .navigationTitle("新增記錄")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -225,4 +229,5 @@ struct AddExpenseView: View {
 
 #Preview {
     AddExpenseView(dataManager: ExpenseDataManager())
+        .preferredColorScheme(.dark) // **[新增]**
 }

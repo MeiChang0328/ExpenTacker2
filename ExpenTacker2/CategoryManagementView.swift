@@ -71,6 +71,10 @@ struct CategoryManagementView: View {
                     .onDelete(perform: deleteExpense)
                 }
             }
+            // **[新增]** 設定背景色
+            .background(Color.pageBackground.ignoresSafeArea())
+            .scrollContentBackground(.hidden)
+            //
             .listStyle(.insetGrouped)
             .navigationTitle("分類管理")
             .navigationBarTitleDisplayMode(.inline)
@@ -84,9 +88,11 @@ struct CategoryManagementView: View {
             }
             .sheet(isPresented: $showingAddCategory) {
                 AddCategoryView(dataManager: dataManager)
+                    .preferredColorScheme(ColorScheme.dark) // **[修復]**
             }
             .sheet(item: $editingCategory, content: { category in
                 EditCategoryView(dataManager: dataManager, category: category)
+                    .preferredColorScheme(ColorScheme.dark) // **[修復]**
             })
         }
     }
@@ -130,4 +136,5 @@ struct CategoryRowView: View {
 
 #Preview {
     CategoryManagementView(dataManager: ExpenseDataManager())
+        .preferredColorScheme(ColorScheme.dark) // **[修復]**
 }

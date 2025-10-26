@@ -119,7 +119,8 @@ struct ExpenseListView: View {
                     }
                     .padding()
                 }
-                .background(Color(.systemGroupedBackground))
+                // **[修改]** 使用 cardBackground 作為篩選區背景
+                .background(Color.cardBackground)
                 
                 // 內容區域 - 列表或圖表
                 if showingChart {
@@ -128,6 +129,9 @@ struct ExpenseListView: View {
                     expenseListView
                 }
             }
+            // **[新增]** 設定導覽列背景
+            .background(Color.pageBackground.ignoresSafeArea())
+            //
             .navigationTitle("消費分析")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -239,6 +243,8 @@ struct ExpenseListView: View {
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // **[新增]** 確保空狀態時背景正確
+                .background(Color.pageBackground)
             } else {
                 List {
                     ForEach(filteredExpenses) { expense in
@@ -262,10 +268,15 @@ struct ExpenseListView: View {
                         }
                     }
                 }
+                // **[新增]** 設定背景色
+                .background(Color.pageBackground.ignoresSafeArea())
+                .scrollContentBackground(.hidden)
+                //
                 .listStyle(.insetGrouped)
                 .sheet(isPresented: $showingEditExpense) {
                     if let editingExpense = editingExpense {
                         EditExpenseView(dataManager: dataManager, expense: editingExpense)
+                            .preferredColorScheme(ColorScheme.dark) // **[修復]**
                     }
                 }
             }
@@ -283,7 +294,8 @@ struct ExpenseListView: View {
             }
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        // **[修改]** 使用 pageBackground
+        .background(Color.pageBackground)
     }
     
     // MARK: - 區間消費分析長條圖 (新增)
@@ -355,7 +367,7 @@ struct ExpenseListView: View {
                 )
             }
             // 統計摘要
-           
+            
         }
     }
     
@@ -713,4 +725,5 @@ struct ExpenseListView: View {
 
 #Preview {
     ExpenseListView(dataManager: ExpenseDataManager())
+        .preferredColorScheme(ColorScheme.dark) // **[修復]**
 }

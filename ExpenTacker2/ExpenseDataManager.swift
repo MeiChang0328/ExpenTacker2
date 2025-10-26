@@ -74,8 +74,8 @@ class ExpenseDataManager: ObservableObject {
     // 建立預設分類
     private func createDefaultCategories() {
         categories = [ExpenseCategory.noneCategory] +
-                    ExpenseCategory.defaultIncomeCategories +
-                    ExpenseCategory.defaultExpenseCategories
+                     ExpenseCategory.defaultIncomeCategories +
+                     ExpenseCategory.defaultExpenseCategories
         saveCategories()
     }
     
@@ -220,11 +220,21 @@ class ExpenseDataManager: ObservableObject {
     
     // MARK: - 刪除記錄
     func deleteExpense(_ expense: ExpenseRecord) {
+        // **[修改]** 刪除記錄時也應該刪除關聯的照片
+        if let filename = expense.photoFilename {
+            deleteImage(filename: filename)
+        }
         expenses.removeAll { $0.id == expense.id }
         saveExpenses()
     }
     
     func deleteExpense(at indexSet: IndexSet) {
+        let expensesToDelete = indexSet.map { self.expenses[$0] }
+        for expense in expensesToDelete {
+            if let filename = expense.photoFilename {
+                deleteImage(filename: filename)
+            }
+        }
         expenses.remove(atOffsets: indexSet)
         saveExpenses()
     }
@@ -406,6 +416,14 @@ class ExpenseDataManager: ObservableObject {
         let url = imagesDirectoryURL.appendingPathComponent(filename)
         guard fileManager.fileExists(atPath: url.path) else { return nil }
         return UIImage(contentsOfFile: url.path)
+    }
+    
+    // **[這就是您缺少的函式]**
+    // 這個函式就是 EditExpenseView 在 init 時需要呼叫的
+    func loadImageData(for filename: String?) -> Data? {
+        guard let image = loadImage(for: filename) else { return nil }
+        // 將 UIImage 轉回 Data
+        return image.jpegData(compressionQuality: 0.8) // 0.8 是一個合理的壓縮比例
     }
     
     func deleteImage(filename: String?) {
