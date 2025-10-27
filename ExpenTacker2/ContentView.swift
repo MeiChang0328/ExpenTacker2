@@ -4,7 +4,7 @@
 //
 //  Created by Gemini on 2025/10/26.
 //
-//  --- ABSOLUTELY COMPLETE CODE (Oct 27 - Swipe Release Trigger Final, No Omissions) ---
+//  --- ABSOLUTELY COMPLETE CODE (Oct 27 - Long Press to Edit, Swipe Left to Delete) ---
 //
 
 import SwiftUI
@@ -78,6 +78,26 @@ struct ContentView: View {
     }
     private var selectedMonthBalance: Double {
         selectedMonthIncome - selectedMonthExpense
+    }
+    
+    // Helper to get formatted balance text AND color for the *selected* month
+    private var formattedSelectedMonthBalance: (text: String, color: Color) {
+        let balanceValue = selectedMonthBalance
+        
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "TWD"
+        formatter.maximumFractionDigits = 0
+        
+        let formattedText = formatter.string(from: NSNumber(value: abs(balanceValue))) ?? "NT$0"
+        
+        if balanceValue > 0 {
+            return ("+\(formattedText)", .highlightGreen) // e.g., "+NT$400"
+        } else if balanceValue < 0 {
+            return ("-\(formattedText)", .highlightRed) // e.g., "-NT$100"
+        } else {
+            return (formattedText, .primaryText) // e.g., "NT$0"
+        }
     }
     // --- End Formatting & Filtering Helpers ---
 
@@ -212,8 +232,9 @@ struct ContentView: View {
             Rectangle().fill(Color.brandGold).frame(height: 1).padding(.vertical, 5)
             VStack(spacing: 4) {
                 Text("本月結餘").font(.system(size: 14)).foregroundColor(.primaryText.opacity(0.8))
-                Text(formatBalanceValue(selectedMonthBalance)).font(.system(size: 24, weight: .bold))
-                    .foregroundColor(selectedMonthBalance >= 0 ? .highlightGreen : .highlightRed)
+                Text(formattedSelectedMonthBalance.text) // Use the new formatted property
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(formattedSelectedMonthBalance.color) // Use color from property
             }
             .frame(maxWidth: .infinity).padding(.top, 4)
             Spacer()
@@ -238,18 +259,16 @@ struct ContentView: View {
                  VStack(spacing: 10) { // Card Spacing
                      ForEach(filteredExpensesForSelectedMonth.prefix(5), id: \.id) { expense in
                          let category = dataManager.getCategory(by: expense.categoryId)
-                         TransactionCardView( // <<< Uses the updated TransactionCardView below
+                         TransactionCardView(
                              expense: expense, category: category,
-                             onEdit: { // This action is triggered by the swipe gesture end
+                             onEdit: { // This action is triggered by long press
                                  editingExpense = expense
                                  showingEditExpense = true
                              },
-                             onDelete: { // Placeholder for delete action
-                                 print("Delete action placeholder for \(expense.remark)")
-                             },
-                             onTap: { // Simple tap action (optional)
-                                 print("Tapped on \(expense.remark)")
+                             onDelete: { // This action is triggered by swipe-left
+                                 dataManager.deleteExpense(expense)
                              }
+                             // onTap is no longer used for edit
                          )
                          .environmentObject(dataManager)
                      }
@@ -285,100 +304,66 @@ struct TabBarButton: View {
     }
 }
 
-// MARK: - 交易卡片組件 (Custom Swipe Gesture, Release Trigger, Black Text)
+// MARK: - 交易卡片組件 (Long Press Edit, Swipe-Left Delete)
  struct TransactionCardView: View {
      let expense: ExpenseRecord
      let category: ExpenseCategory
      let onEdit: () -> Void
-     let onDelete: () -> Void // Keep for potential future use
-     let onTap: () -> Void // Keep for potential future use
+     let onDelete: () -> Void
+     // let onTap: () -> Void // Removed, no longer needed for edit
 
      @EnvironmentObject var dataManager: ExpenseDataManager
      
-     // --- State for Drag Gesture ---
-     @State private var offset: CGFloat = 0
-     @State private var isDragging: Bool = false
-     private let revealWidth: CGFloat = 80 // Width of the area to reveal
-     private let editTriggerThreshold: CGFloat = -60 // Threshold to trigger edit on release
-     // --- End State ---
+     // --- Remove Drag Gesture States ---
+     // @State private var offset: CGFloat = 0
+     // @State private var isDragging: Bool = false
+     // @State private var isHighlighted: Bool = false // Removed tap highlight
      
      // Date Formatter
-     private static var dateFormatter: DateFormatter = {
+     static var dateFormatter: DateFormatter = {
          let formatter = DateFormatter(); formatter.locale = Locale(identifier: "zh_TW"); formatter.dateFormat = "M月dd日"; return formatter
      }()
      private var formattedDisplayDate: String { TransactionCardView.dateFormatter.string(from: expense.date) }
      private var formattedAmountForDisplay: String { "\(String(format: "%.0f", abs(expense.amount))) 元" }
 
      var body: some View {
-         ZStack {
-             // MARK: - Background Reveal Area (Edit Action)
-             HStack {
-                 Spacer() // Push content to the right
-                 Text("編輯")
-                     // Set text color to black
-                     .foregroundColor(.black)
-                     .font(.system(size: 16, weight: .medium))
-                     .padding(.horizontal)
-                     .frame(width: revealWidth, height: 60) // Match card height
-                     // Remove long press gesture here
+         // **[修改]** Removed ZStack, back to simple HStack
+         HStack(spacing: 15) {
+             // Image ('X' or Photo)
+             if let photoFilename = expense.photoFilename, let image = dataManager.loadImage(for: photoFilename) {
+                  Image(uiImage: image).resizable().scaledToFill().frame(width: 50, height: 50).clipShape(RoundedRectangle(cornerRadius: 3)).clipped()
+             } else {
+                 Image(systemName: "xmark").font(.title2).foregroundColor(.primaryText.opacity(0.7)).frame(width: 50, height: 50).background(Color.gray.opacity(0.3)).clipShape(RoundedRectangle(cornerRadius: 3))
              }
-             .background(Color.brandGold) // Brand color background
-             .cornerRadius(8) // Match card corner radius
-
-             // MARK: - Foreground Card Content
-             HStack(spacing: 15) {
-                 // Image ('X' or Photo)
-                 if let photoFilename = expense.photoFilename, let image = dataManager.loadImage(for: photoFilename) {
-                      Image(uiImage: image).resizable().scaledToFill().frame(width: 50, height: 50).clipShape(RoundedRectangle(cornerRadius: 8)).clipped()
-                 } else {
-                     Image(systemName: "xmark").font(.title2).foregroundColor(.primaryText.opacity(0.7)).frame(width: 50, height: 50).background(Color.gray.opacity(0.3)).clipShape(RoundedRectangle(cornerRadius: 8))
-                 }
-                 // Middle Text (Remark & Date)
-                 VStack(alignment: .leading, spacing: 4) {
-                     Text(expense.remark).font(.subheadline).fontWeight(.medium).foregroundColor(.primaryText).lineLimit(1)
-                     Text(formattedDisplayDate).font(.caption).foregroundColor(.primaryText.opacity(0.7))
-                 }
-                 Spacer(minLength: 10)
-                 // Amount Text
-                 Text(formattedAmountForDisplay).font(.subheadline).fontWeight(.medium).foregroundColor(.primaryText).padding(.trailing, 5)
+             // Middle Text (Remark & Date)
+             VStack(alignment: .leading, spacing: 4) {
+                 Text(expense.remark).font(.subheadline).fontWeight(.medium).foregroundColor(.primaryText).lineLimit(1)
+                 Text(formattedDisplayDate).font(.caption).foregroundColor(.primaryText.opacity(0.7))
              }
-             .padding(.vertical, 5)
-             .frame(height: 60)
-             .background(Color.substrateBackground) // Card main background
-             .cornerRadius(8)
-             .offset(x: offset) // Apply horizontal offset based on drag
-             .gesture(
-                 DragGesture()
-                     .onChanged { gesture in
-                         // Only allow dragging left (negative offset)
-                         let newOffset = gesture.translation.width
-                         // Allow dragging slightly past the reveal width for elasticity
-                         offset = max(newOffset, -revealWidth - 20) // Limit drag slightly past reveal
-                         if newOffset >= 0 { // Prevent right swipe beyond origin
-                             offset = 0
-                         }
-                         isDragging = true
-                     }
-                     .onEnded { gesture in
-                         withAnimation(.spring()) { // Use spring animation for snap back/trigger
-                             // Check threshold to trigger edit action on release
-                             if gesture.translation.width < editTriggerThreshold {
-                                 // Swiped far enough, trigger edit AFTER animation finishes slightly
-                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                      onEdit()
-                                 }
-                                 // Snap back after triggering
-                                 offset = 0
-                             } else {
-                                 // Not swiped far enough, snap back to 0
-                                 offset = 0
-                             }
-                         }
-                         isDragging = false
-                     }
-             ) // End gesture
-
-         } // End ZStack
+             Spacer(minLength: 10)
+             // Amount Text
+             Text(formattedAmountForDisplay).font(.subheadline).fontWeight(.medium).foregroundColor(.primaryText).padding(.trailing, 5)
+         }
+         .padding(.vertical, 5)
+         .frame(height: 60)
+         .background(Color.substrateBackground)
+         .cornerRadius(3) // Use 3px corner radius
+         // **[新增]** Add Long Press Gesture for Edit
+         .onLongPressGesture(minimumDuration: 0.5) { // Adjust duration as needed
+             onEdit()
+         }
+         // **[新增]** Add standard swipe-left-to-delete
+         .swipeActions(edge: .trailing, allowsFullSwipe: true) { // .trailing = swipe-left
+             Button(role: .destructive) {
+                 onDelete() // Call the delete action
+             } label: {
+                 Text("刪除") // **[修改]** Text only, as requested
+             }
+             .tint(.highlightRed) // Use theme red color
+         }
+         // **[移除]** Removed custom .gesture(DragGesture...)
+         // **[移除]** Removed .swipeActions(edge: .leading...)
+         // **[移除]** Removed .overlay(...) for tap highlight
      }
  }
 
@@ -413,6 +398,8 @@ fileprivate func formatBalanceValue(_ amount: Double) -> String {
 
 // --- Date Formatter ---
 fileprivate extension TransactionCardView {
+    // This extension is now redundant as the var is static inside the struct
+    // but leaving it doesn't hurt.
     static var dateFormatterInstance: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_TW")
