@@ -32,6 +32,7 @@ struct ExpenTacker2App: App {
                     if let expenseId = selectedExpenseId {
                         if let expense = dataManager.expenses.first(where: { $0.id.uuidString == expenseId }) {
                             ExpenseDetailView(dataManager: dataManager, expense: expense)
+                                .preferredColorScheme(.dark) // 確保 Sheet 也是深色
                         } else {
                             // 調試：找不到對應的 expense
                             VStack(spacing: 20) {
@@ -53,6 +54,7 @@ struct ExpenTacker2App: App {
                                 .cornerRadius(8)
                             }
                             .padding()
+                            .preferredColorScheme(.dark) // 確保 Sheet 也是深色
                         }
                     } else {
                         // 調試：沒有 expenseId
@@ -69,11 +71,14 @@ struct ExpenTacker2App: App {
                             .cornerRadius(8)
                         }
                         .padding()
+                        .preferredColorScheme(.dark) // 確保 Sheet 也是深色
                     }
                 }
                 .sheet(isPresented: $showingStatistics) {
                     ExpenseListView(dataManager: dataManager)
+                        .preferredColorScheme(.dark) // 確保 Sheet 也是深色
                 }
+                .preferredColorScheme(.dark) // **[修改]** 強制 App 啟用深色模式
         }
     }
     

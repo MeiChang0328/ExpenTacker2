@@ -1,3 +1,10 @@
+//
+//  ExpenseDetailView.swift
+//  ExpenTacker2
+//
+//  Created by 張郁眉 on 2025/10/3.
+//
+
 import SwiftUI
 
 struct ExpenseDetailView: View {
@@ -72,11 +79,16 @@ struct ExpenseDetailView: View {
                 }
             }
             .padding()
-            .background(RoundedRectangle(cornerRadius: 12).fill(Color(.systemGroupedBackground)))
+            // **[修改]** 使用 cardBackground
+            .background(RoundedRectangle(cornerRadius: 12).fill(Color.cardBackground))
 
             Spacer()
         }
         .padding()
+        // **[新增]** 設定背景色
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.pageBackground.ignoresSafeArea())
+        //
         .navigationTitle("明細")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -95,6 +107,7 @@ struct ExpenseDetailView: View {
         }
         .sheet(isPresented: $showingEdit) {
             EditExpenseView(dataManager: dataManager, expense: expense)
+                .preferredColorScheme(ColorScheme.dark) // **[修復]**
         }
         .alert("確定要刪除這筆記錄嗎？", isPresented: $showingDeleteAlert, actions: {
             Button("刪除", role: .destructive) {
@@ -123,5 +136,6 @@ struct ExpenseDetailView: View {
     )
     NavigationView {
         ExpenseDetailView(dataManager: manager, expense: expense)
+            .preferredColorScheme(ColorScheme.dark) // **[修復]**
     }
 }

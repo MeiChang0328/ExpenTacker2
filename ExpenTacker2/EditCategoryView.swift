@@ -70,6 +70,10 @@ struct EditCategoryView: View {
                     .padding(.vertical, 5)
                 }
             }
+            // **[新增]** 設定背景色
+            .background(Color.pageBackground.ignoresSafeArea())
+            .scrollContentBackground(.hidden)
+            //
             .navigationTitle("編輯分類")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -98,4 +102,5 @@ struct EditCategoryView: View {
 
 #Preview {
     EditCategoryView(dataManager: ExpenseDataManager(), category: ExpenseCategory(name: "餐飲", color: .red, type: .expense))
+        .preferredColorScheme(ColorScheme.dark) // **[修復]**
 }

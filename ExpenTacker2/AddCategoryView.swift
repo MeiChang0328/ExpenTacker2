@@ -4,6 +4,8 @@
 //
 //  Created by 張郁眉 on 2025/10/1.
 //
+//  --- REDESIGNED based on Wireframe, Dark Palette & CornerRadius 3 ---
+//
 
 import SwiftUI
 
@@ -15,84 +17,120 @@ struct AddCategoryView: View {
     @State private var selectedType: TransactionType = .expense
     @State private var selectedColor: Color = .blue
     
+    // Check if form is valid (name is not empty)
+    private var isFormValid: Bool {
+        !categoryName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     var body: some View {
-        NavigationView {
-            Form {
-                Section("分類資訊") {
-                    // 分類名稱輸入
-                    HStack {
-                        Text("名稱")
-                        TextField("請輸入分類名稱", text: $categoryName)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                    }
+        ZStack {
+            Color.pageBackground.ignoresSafeArea() // Main background
+
+            VStack(spacing: 0) { // Main VStack
+                
+                // MARK: - Custom Header
+                ZStack {
+                    Color.cardBackground // #2D3044
                     
-                    // 類型選擇
+                    Text("新增分類")
+                        .foregroundColor(.primaryText)
+                        .font(.system(size: 16, weight: .bold))
+                    
                     HStack {
-                        Text("類型")
+                        Button("取消") { dismiss() }
+                            .foregroundColor(.primaryText.opacity(0.8))
                         Spacer()
-                        Picker("類型", selection: $selectedType) {
-                            Text("收入").tag(TransactionType.income)
-                            Text("支出").tag(TransactionType.expense)
-                        }
-                        .pickerStyle(SegmentedPickerStyle())
-                        .frame(width: 150)
+                        Button("儲存") { saveCategory() }
+                            .foregroundColor(isFormValid ? .brandGold : .gray) // Use gold, disable if invalid
+                            .disabled(!isFormValid)
                     }
+                    .padding(.horizontal)
                 }
+                .frame(height: 48) // Fixed header height
+
+                // MARK: - Content Area
+                ScrollView {
+                    VStack(spacing: 20) { // Spacing between elements
+                        
+                        // MARK: - Input Card
+                        VStack(alignment: .leading, spacing: 15) { // Spacing inside card
+                            
+                            // Name Row
+                            HStack {
+                                Text("名稱")
+                                    .foregroundColor(.primaryText.opacity(0.8))
+                                    .frame(width: 60, alignment: .leading)
+                                TextField("", text: $categoryName, prompt: Text("請輸入分類名稱").foregroundColor(.gray.opacity(0.5)))
+                                    .foregroundColor(.primaryText)
+                                    .textFieldStyle(.plain)
+                                    .padding(8)
+                                    .background(Color.black.opacity(0.2))
+                                    .cornerRadius(3) // Corner Radius 3
+                                    .overlay(RoundedRectangle(cornerRadius: 3).stroke(Color.gray.opacity(0.5), lineWidth: 1))
+                            }
+                            .frame(height: 60)
+                            
+                            // Type Row (Custom Picker)
+                            HStack {
+                                Text("類型")
+                                    .foregroundColor(.primaryText.opacity(0.8))
+                                    .frame(width: 60, alignment: .leading)
+                                
+                                HStack(spacing: 5) {
+                                    Button("收入") { selectedType = .income }
+                                        .frame(maxWidth: .infinity, minHeight: 32)
+                                        .background(selectedType == .income ? Color.highlightGreen : Color.black.opacity(0.2))
+                                        .foregroundColor(.primaryText)
+                                        .cornerRadius(3) // Corner Radius 3
+
+                                    Button("支出") { selectedType = .expense }
+                                        .frame(maxWidth: .infinity, minHeight: 32)
+                                        .background(selectedType == .expense ? Color.highlightRed : Color.black.opacity(0.2))
+                                        .foregroundColor(.primaryText)
+                                        .cornerRadius(3) // Corner Radius 3
+                                }
+                                .padding(3)
+                                .background(Color.black.opacity(0.2))
+                                .cornerRadius(3) // Corner Radius 3
+                            }
+                            .frame(height: 60)
+                            
+                            // Color Picker Row
+                            HStack {
+                                Text("顏色")
+                                    .foregroundColor(.primaryText.opacity(0.8))
+                                    .frame(width: 60, alignment: .leading)
+                                
+                                ColorPicker("", selection: $selectedColor, supportsOpacity: true)
+                                    .labelsHidden()
+                                    .frame(maxWidth: .infinity, alignment: .trailing) // Push picker to the right
+                            }
+                            .frame(height: 60)
+
+                        } // End Card VStack
+                        .padding() // Inner padding for the card
+                        .frame(width: 322) // Fixed width
+                        .background(Color.substrateBackground) // Card background
+                        .cornerRadius(3) // Card Corner Radius 3
+                        
+                    } // End Main Content VStack
+                    .padding(.top, 25) // Space below header
+                    .padding(.bottom, 20) // Space at bottom
+                    
+                } // End ScrollView
                 
-                // 使用系統顏色挑選器
-                Section("顏色選擇") {
-                    ColorPicker("顏色", selection: $selectedColor, supportsOpacity: true)
-                }
-                
-                Section("預覽") {
-                    previewSection
-                }
-            }
-            .navigationTitle("新增分類")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("取消") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("儲存") {
-                        saveCategory()
-                    }
-                    .disabled(categoryName.isEmpty)
-                }
-            }
-        }
+            } // End Main VStack
+        } // End ZStack
+        .preferredColorScheme(.dark)
     }
     
-    private var previewSection: some View {
-        HStack {
-            Circle()
-                .fill(selectedColor)
-                .frame(width: 30, height: 30)
-            
-            Text(categoryName.isEmpty ? "分類名稱" : categoryName)
-                .font(.subheadline)
-                .foregroundColor(categoryName.isEmpty ? .secondary : .primary)
-            
-            Spacer()
-            
-            Text(selectedType.displayName)
-                .font(.caption)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(selectedType == .income ? .green.opacity(0.2) : .red.opacity(0.2))
-                .foregroundColor(selectedType == .income ? .green : .red)
-                .cornerRadius(8)
-        }
-        .padding(.vertical, 5)
-    }
+    // Removed private var previewSection
     
     private func saveCategory() {
+        guard isFormValid else { return } // Double check validity
+        
         let newCategory = ExpenseCategory(
-            name: categoryName,
+            name: categoryName.trimmingCharacters(in: .whitespacesAndNewlines),
             color: selectedColor,
             type: selectedType
         )
@@ -104,4 +142,20 @@ struct AddCategoryView: View {
 
 #Preview {
     AddCategoryView(dataManager: ExpenseDataManager())
+        .preferredColorScheme(.dark)
 }
+
+// --- Color Extension Placeholder ---
+// Assume Color+Extensions.swift exists in your project.
+/*
+ extension Color {
+     static let pageBackground = Color(hex: "#1A1D2E")
+     static let cardBackground = Color(hex: "#2D3044")
+     static let substrateBackground = Color(hex: "#293158")
+     static let primaryText = Color(hex: "#FFFFFF")
+     static let brandGold = Color(hex: "#F1B606")
+     static let highlightGreen = Color(hex: "#6FCF97")
+     static let highlightRed = Color(hex: "#EB5757")
+     init(hex: String) { ... }
+ }
+*/
