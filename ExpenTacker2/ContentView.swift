@@ -4,7 +4,7 @@
 //
 //  Created by Gemini on 2025/10/26.
 //
-//  --- ABSOLUTELY COMPLETE CODE (Oct 27 - Long Press to Edit, Swipe Left to Delete) ---
+//  --- ABSOLUTELY COMPLETE CODE (Oct 27 - Fixed Swipe-to-Delete Action) ---
 //
 
 import SwiftUI
@@ -92,11 +92,11 @@ struct ContentView: View {
         let formattedText = formatter.string(from: NSNumber(value: abs(balanceValue))) ?? "NT$0"
         
         if balanceValue > 0 {
-            return ("+\(formattedText)", .highlightGreen) // e.g., "+NT$400"
+            return ("+\(formattedText)", .highlightGreen)
         } else if balanceValue < 0 {
-            return ("-\(formattedText)", .highlightRed) // e.g., "-NT$100"
+            return ("-\(formattedText)", .highlightRed)
         } else {
-            return (formattedText, .primaryText) // e.g., "NT$0"
+            return (formattedText, .primaryText)
         }
     }
     // --- End Formatting & Filtering Helpers ---
@@ -232,9 +232,9 @@ struct ContentView: View {
             Rectangle().fill(Color.brandGold).frame(height: 1).padding(.vertical, 5)
             VStack(spacing: 4) {
                 Text("本月結餘").font(.system(size: 14)).foregroundColor(.primaryText.opacity(0.8))
-                Text(formattedSelectedMonthBalance.text) // Use the new formatted property
+                Text(formattedSelectedMonthBalance.text)
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(formattedSelectedMonthBalance.color) // Use color from property
+                    .foregroundColor(formattedSelectedMonthBalance.color)
             }
             .frame(maxWidth: .infinity).padding(.top, 4)
             Spacer()
@@ -266,9 +266,11 @@ struct ContentView: View {
                                  showingEditExpense = true
                              },
                              onDelete: { // This action is triggered by swipe-left
-                                 dataManager.deleteExpense(expense)
+                                 // **[新增]** Add animation for deletion
+                                 withAnimation {
+                                     dataManager.deleteExpense(expense)
+                                 }
                              }
-                             // onTap is no longer used for edit
                          )
                          .environmentObject(dataManager)
                      }
@@ -310,16 +312,13 @@ struct TabBarButton: View {
      let category: ExpenseCategory
      let onEdit: () -> Void
      let onDelete: () -> Void
-     // let onTap: () -> Void // Removed, no longer needed for edit
+     // onTap is no longer used for edit
 
      @EnvironmentObject var dataManager: ExpenseDataManager
      
      // --- Remove Drag Gesture States ---
-     // @State private var offset: CGFloat = 0
-     // @State private var isDragging: Bool = false
-     // @State private var isHighlighted: Bool = false // Removed tap highlight
      
-     // Date Formatter
+     // Date Formatter (Made static to be accessible)
      static var dateFormatter: DateFormatter = {
          let formatter = DateFormatter(); formatter.locale = Locale(identifier: "zh_TW"); formatter.dateFormat = "M月dd日"; return formatter
      }()
@@ -327,7 +326,6 @@ struct TabBarButton: View {
      private var formattedAmountForDisplay: String { "\(String(format: "%.0f", abs(expense.amount))) 元" }
 
      var body: some View {
-         // **[修改]** Removed ZStack, back to simple HStack
          HStack(spacing: 15) {
              // Image ('X' or Photo)
              if let photoFilename = expense.photoFilename, let image = dataManager.loadImage(for: photoFilename) {
@@ -348,22 +346,20 @@ struct TabBarButton: View {
          .frame(height: 60)
          .background(Color.substrateBackground)
          .cornerRadius(3) // Use 3px corner radius
-         // **[新增]** Add Long Press Gesture for Edit
+         // Add Long Press Gesture for Edit
          .onLongPressGesture(minimumDuration: 0.5) { // Adjust duration as needed
              onEdit()
          }
-         // **[新增]** Add standard swipe-left-to-delete
-         .swipeActions(edge: .trailing, allowsFullSwipe: true) { // .trailing = swipe-left
+         // Add standard swipe-left-to-delete
+         // **[修改]** Set allowsFullSwipe to false
+         .swipeActions(edge: .trailing, allowsFullSwipe: false) { // .trailing = swipe-left
              Button(role: .destructive) {
                  onDelete() // Call the delete action
              } label: {
-                 Text("刪除") // **[修改]** Text only, as requested
+                 Text("刪除") // Text only, as requested
              }
              .tint(.highlightRed) // Use theme red color
          }
-         // **[移除]** Removed custom .gesture(DragGesture...)
-         // **[移除]** Removed .swipeActions(edge: .leading...)
-         // **[移除]** Removed .overlay(...) for tap highlight
      }
  }
 
