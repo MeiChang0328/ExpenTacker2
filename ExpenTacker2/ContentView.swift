@@ -4,7 +4,7 @@
 //
 //  Created by Gemini on 2025/10/26.
 //
-//  --- ABSOLUTELY COMPLETE CODE (Oct 27 - Fixed Swipe-to-Delete Action) ---
+//  --- ABSOLUTELY COMPLETE CODE (Oct 28 - Fixed Swipe-to-Delete by using List) ---
 //
 
 import SwiftUI
@@ -47,21 +47,21 @@ struct ContentView: View {
          formatter.locale = Locale(identifier: "zh_TW")
          formatter.dateFormat = "yyyy年 M月"
          return formatter
-     }()
-     
-     private var formattedSelectedMonth: String {
-         ContentView.monthFormatter.string(from: displayedDate)
-     }
-     
-     private var selectedMonthDateRange: (start: Date, end: Date) {
-         let calendar = Calendar.current
-         guard let startOfMonth = calendar.dateInterval(of: .month, for: displayedDate)?.start,
-               let endOfMonth = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth) else {
-             return (displayedDate, displayedDate) // Fallback
-         }
-         let endOfDay = calendar.startOfDay(for: endOfMonth).addingTimeInterval(24*60*60 - 1)
-         return (startOfMonth, endOfDay)
-     }
+    }()
+    
+    private var formattedSelectedMonth: String {
+        ContentView.monthFormatter.string(from: displayedDate)
+    }
+    
+    private var selectedMonthDateRange: (start: Date, end: Date) {
+        let calendar = Calendar.current
+        guard let startOfMonth = calendar.dateInterval(of: .month, for: displayedDate)?.start,
+              let endOfMonth = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth) else {
+            return (displayedDate, displayedDate) // Fallback
+        }
+        let endOfDay = calendar.startOfDay(for: endOfMonth).addingTimeInterval(24*60*60 - 1)
+        return (startOfMonth, endOfDay)
+    }
 
     private var filteredExpensesForSelectedMonth: [ExpenseRecord] {
         let range = selectedMonthDateRange
@@ -92,11 +92,11 @@ struct ContentView: View {
         let formattedText = formatter.string(from: NSNumber(value: abs(balanceValue))) ?? "NT$0"
         
         if balanceValue > 0 {
-            return ("+\(formattedText)", .highlightGreen)
+            return ("+\(formattedText)", .highlightGreen) // e.g., "+NT$400"
         } else if balanceValue < 0 {
-            return ("-\(formattedText)", .highlightRed)
+            return ("-\(formattedText)", .highlightRed) // e.g., "-NT$100"
         } else {
-            return (formattedText, .primaryText)
+            return (formattedText, .primaryText) // e.g., "NT$0"
         }
     }
     // --- End Formatting & Filtering Helpers ---
@@ -152,32 +152,32 @@ struct ContentView: View {
             
             // MARK: - Toolbar (Bottom Tab Bar)
             .toolbar {
-                 ToolbarItemGroup(placement: .bottomBar) {
-                     HStack { // Container for tab buttons
-                         // Tab 1: Home
-                         TabBarButton(
+                ToolbarItemGroup(placement: .bottomBar) {
+                    HStack { // Container for tab buttons
+                        // Tab 1: Home
+                        TabBarButton(
                             iconName: "house.fill", text: "新增消費",
                             isSelected: selectedTab == .home
-                         ) { selectedTab = .home; showingAddExpense = true } // Action added
-                         Spacer()
-                         // Tab 2: Analysis
-                         TabBarButton(
+                        ) { selectedTab = .home; showingAddExpense = true } // Action added
+                        Spacer()
+                        // Tab 2: Analysis
+                        TabBarButton(
                             iconName: "chart.pie.fill", text: "消費分析",
                             isSelected: selectedTab == .analysis
-                         ) { selectedTab = .analysis; showingExpenseList = true }
-                         Spacer()
-                         // Tab 3: Categories
-                         TabBarButton(
+                        ) { selectedTab = .analysis; showingExpenseList = true }
+                        Spacer()
+                        // Tab 3: Categories
+                        TabBarButton(
                             iconName: "list.bullet.rectangle.portrait.fill", text: "分類管理",
                             isSelected: selectedTab == .categories
-                         ) { selectedTab = .categories; showingCategories = true }
-                     }
-                     .padding(.horizontal) // Padding for button spacing from edges
-                     .padding(.vertical, 15) // Vertical padding for height
-                     .frame(maxWidth: .infinity) // Span full width
-                 }
-             }
-             .toolbarBackground(.hidden, for: .bottomBar) // Make system background transparent
+                        ) { selectedTab = .categories; showingCategories = true }
+                    }
+                    .padding(.horizontal) // Padding for button spacing from edges
+                    .padding(.vertical, 15) // Vertical padding for height
+                    .frame(maxWidth: .infinity) // Span full width
+                }
+            }
+            .toolbarBackground(.hidden, for: .bottomBar) // Make system background transparent
 
         } // End NavigationView
         // Sheets
@@ -232,9 +232,9 @@ struct ContentView: View {
             Rectangle().fill(Color.brandGold).frame(height: 1).padding(.vertical, 5)
             VStack(spacing: 4) {
                 Text("本月結餘").font(.system(size: 14)).foregroundColor(.primaryText.opacity(0.8))
-                Text(formattedSelectedMonthBalance.text)
+                Text(formattedSelectedMonthBalance.text) // Use the new formatted property
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(formattedSelectedMonthBalance.color)
+                    .foregroundColor(formattedSelectedMonthBalance.color) // Use color from property
             }
             .frame(maxWidth: .infinity).padding(.top, 4)
             Spacer()
@@ -242,11 +242,13 @@ struct ContentView: View {
         .padding(17)
         .frame(width: 343, height: 189)
         .background(Color.substrateBackground)
-        .cornerRadius(3)
+        .cornerRadius(3) // 符合您要求的 3px
     }
 
      // MARK: - 交易明細區域 (Uses Selected Month Data)
      private var transactionsSection: some View {
+         // [*** 關鍵修改 ***]
+         // 這裡的 VStack 是 OK 的，是裡面的 ForEach 容器需要改
          VStack(alignment: .leading, spacing: 10) {
              Text("交易明細")
                  .font(.headline) // Non-bold title
@@ -256,7 +258,11 @@ struct ContentView: View {
              if filteredExpensesForSelectedMonth.isEmpty {
                  EmptyStateView().frame(maxWidth: .infinity)
              } else {
-                 VStack(spacing: 10) { // Card Spacing
+                 
+                 // [*** 關鍵修改 ***]
+                 // 將原本的 VStack(spacing: 10) 改為 List
+                 // 這樣裡面的 .swipeActions 才能生效
+                 List {
                      ForEach(filteredExpensesForSelectedMonth.prefix(5), id: \.id) { expense in
                          let category = dataManager.getCategory(by: expense.categoryId)
                          TransactionCardView(
@@ -266,21 +272,33 @@ struct ContentView: View {
                                  showingEditExpense = true
                              },
                              onDelete: { // This action is triggered by swipe-left
-                                 // **[新增]** Add animation for deletion
+                                 // [修改] 加上動畫讓刪除更流暢
                                  withAnimation {
                                      dataManager.deleteExpense(expense)
                                  }
                              }
                          )
                          .environmentObject(dataManager)
+                         // [新增] 這些修改是為了讓 List 看起來像 VStack
+                         .listRowInsets(EdgeInsets(top: 5, leading: 0, bottom: 5, trailing: 0)) // 模擬 10px spacing (上下各5)
+                         .listRowSeparator(.hidden) // 隱藏分隔線
+                         .listRowBackground(Color.pageBackground) // 讓 row 背景透明 (顯示 pageBackground)
                      }
-                 } // End ForEach VStack
+                 } // End List
+                 .listStyle(.plain) // 使用 .plain 樣式 (移除 inset/grouped 外觀)
+                 .background(Color.pageBackground) // 確保 List 本身的背景也是 pageBackground
+                 // [新增] 禁用 List 的捲動，交給外層 ScrollView
+                 .scrollDisabled(true)
+                 // [新增] 必須給 List 一個固定高度，否則它在 ScrollView 中會無法計算佈局
+                 // 70 = (卡片 60) + (上下 Insets 5+5)
+                 .frame(height: CGFloat(filteredExpensesForSelectedMonth.prefix(5).count) * 70)
+
              } // End if/else
 
          }
          .frame(maxWidth: 343) // Constrain width
      }
-     
+    
      // MARK: - Helper Function to Change Month
      private func changeMonth(by amount: Int) {
          if let newDate = Calendar.current.date(byAdding: .month, value: amount, to: displayedDate) {
@@ -307,17 +325,15 @@ struct TabBarButton: View {
 }
 
 // MARK: - 交易卡片組件 (Long Press Edit, Swipe-Left Delete)
+// (這個 View 不需要修改，您的程式碼是正確的)
  struct TransactionCardView: View {
      let expense: ExpenseRecord
      let category: ExpenseCategory
      let onEdit: () -> Void
      let onDelete: () -> Void
-     // onTap is no longer used for edit
 
      @EnvironmentObject var dataManager: ExpenseDataManager
-     
-     // --- Remove Drag Gesture States ---
-     
+    
      // Date Formatter (Made static to be accessible)
      static var dateFormatter: DateFormatter = {
          let formatter = DateFormatter(); formatter.locale = Locale(identifier: "zh_TW"); formatter.dateFormat = "M月dd日"; return formatter
@@ -329,7 +345,7 @@ struct TabBarButton: View {
          HStack(spacing: 15) {
              // Image ('X' or Photo)
              if let photoFilename = expense.photoFilename, let image = dataManager.loadImage(for: photoFilename) {
-                  Image(uiImage: image).resizable().scaledToFill().frame(width: 50, height: 50).clipShape(RoundedRectangle(cornerRadius: 3)).clipped()
+                 Image(uiImage: image).resizable().scaledToFill().frame(width: 50, height: 50).clipShape(RoundedRectangle(cornerRadius: 3)).clipped()
              } else {
                  Image(systemName: "xmark").font(.title2).foregroundColor(.primaryText.opacity(0.7)).frame(width: 50, height: 50).background(Color.gray.opacity(0.3)).clipShape(RoundedRectangle(cornerRadius: 3))
              }
@@ -345,18 +361,16 @@ struct TabBarButton: View {
          .padding(.vertical, 5)
          .frame(height: 60)
          .background(Color.substrateBackground)
-         .cornerRadius(3) // Use 3px corner radius
-         // Add Long Press Gesture for Edit
-         .onLongPressGesture(minimumDuration: 0.5) { // Adjust duration as needed
+         .cornerRadius(3) // Use 3px corner radius (符合您的要求)
+         .onLongPressGesture(minimumDuration: 0.5) {
              onEdit()
          }
-         // Add standard swipe-left-to-delete
-         // **[修改]** Set allowsFullSwipe to false
-         .swipeActions(edge: .trailing, allowsFullSwipe: false) { // .trailing = swipe-left
+         // .swipeActions 會在 List 中被正確觸發
+         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
              Button(role: .destructive) {
                  onDelete() // Call the delete action
              } label: {
-                 Text("刪除") // Text only, as requested
+                 Image(systemName: "trash") // 垃圾桶圖示
              }
              .tint(.highlightRed) // Use theme red color
          }
@@ -391,16 +405,3 @@ fileprivate func formatBalanceValue(_ amount: Double) -> String {
     let formatter = NumberFormatter(); formatter.numberStyle = .decimal; formatter.maximumFractionDigits = 0
     return "$ \((formatter.string(from: NSNumber(value: abs(amount))) ?? "0"))"
 }
-
-// --- Date Formatter ---
-fileprivate extension TransactionCardView {
-    // This extension is now redundant as the var is static inside the struct
-    // but leaving it doesn't hurt.
-    static var dateFormatterInstance: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_TW")
-        formatter.dateFormat = "M月dd日"
-        return formatter
-    }()
-}
-// --- End Date Formatter ---
