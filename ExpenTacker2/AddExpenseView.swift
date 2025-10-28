@@ -1,12 +1,3 @@
-//
-//  AddExpenseView.swift
-//  ExpenTacker
-//
-//  Created by 張郁眉 on 2025/10/1.
-//
-//  --- FINAL VERSION (Oct 27 - Cleaned, No Redeclarations) ---
-//
-
 import SwiftUI
 import PhotosUI
 
@@ -55,7 +46,8 @@ struct AddExpenseView: View {
                             Text("交易資訊")
                                 .font(.headline) // Or adjust size as needed
                                 .foregroundColor(.primaryText.opacity(0.9))
-                                .padding(.horizontal) // Align title with card edge
+                                // [*** 修正 ***] 移除此處的 .padding(.horizontal)，由外層 VStack 統一控制
+                                // .padding(.horizontal)
 
                             // The Card itself - Now with updated rows inside
                             transactionInfoCard
@@ -68,14 +60,15 @@ struct AddExpenseView: View {
                              Text("照片")
                                 .font(.headline)
                                 .foregroundColor(.primaryText.opacity(0.9))
-                                .padding(.horizontal)
+                                // [*** 修正 ***] 移除此處的 .padding(.horizontal)，由外層 VStack 統一控制
+                                // .padding(.horizontal)
 
                              photoCard // Extracted photo section content
                          }
                          // Padding handled by outer VStack
-                        
+                         
                     } // End ScrollView Content VStack
-                    .padding(.horizontal) // Add horizontal padding to the ScrollView content VStack
+                    .padding(.horizontal) // [保留] 這是主要的水平邊距，會套用到所有子視圖
                     .padding(.vertical, 20) // Add padding above/below scrollable content
                 } // End ScrollView
 
@@ -169,7 +162,7 @@ struct AddExpenseView: View {
             HStack {
                 Text("金額").foregroundColor(.primaryText.opacity(0.8)).frame(width: 60, alignment: .leading)
                 TextField("", text: $amount, prompt: Text("請輸入金額").foregroundColor(.gray.opacity(0.5))).foregroundColor(.primaryText).keyboardType(.decimalPad).textFieldStyle(.plain).padding(.vertical, 8).padding(.horizontal, 5)
-                     .overlay(RoundedRectangle(cornerRadius: 3).stroke(Color.gray.opacity(0.5), lineWidth: 1)) // Corner Radius 3
+                         .overlay(RoundedRectangle(cornerRadius: 3).stroke(Color.gray.opacity(0.5), lineWidth: 1)) // Corner Radius 3
             }.frame(height: 60).padding(.horizontal)
             
             // Date Row
@@ -186,7 +179,7 @@ struct AddExpenseView: View {
 
         } // End Card VStack
         .padding(.vertical, 15)
-        .frame(width: 320) // Keep width fixed
+        .frame(maxWidth: .infinity) // [*** 修正 ***] 改為 .infinity 來填滿寬度
         .background(Color.substrateBackground)
         .cornerRadius(3) // Corner Radius 3
         .overlay( // Keep left border
@@ -235,7 +228,7 @@ struct AddExpenseView: View {
          .padding()
          .background(Color.substrateBackground.opacity(0.5))
          .cornerRadius(3) // Corner Radius 3
-         .frame(width: 320) // Match transaction card width
+         .frame(maxWidth: .infinity) // [*** 修正 ***] 改為 .infinity 來填滿寬度
     }
 
     // MARK: - Save Expense Function (Primary Definition)
@@ -297,12 +290,3 @@ fileprivate extension AddExpenseView {
     AddExpenseView(dataManager: ExpenseDataManager())
         .preferredColorScheme(.dark)
 }
-
-// --- Color Extension Placeholder (Assume exists in Color+Extensions.swift) ---
-/*
- extension Color { ... }
-*/
-
-// **[REMOVED]** All struct definitions below this line
-// **[REMOVED]** struct CategorySummaryRowView: View { ... }
-// **[REMOVED]** struct ExpenseListEmptyView: View { ... }

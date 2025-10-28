@@ -170,18 +170,3 @@ struct CategoryRowView: View {
     CategoryManagementView(dataManager: ExpenseDataManager())
         .preferredColorScheme(.dark)
 }
-
-// --- Color Extension Placeholder ---
-// Assume Color+Extensions.swift exists in your project.
-/*
- extension Color {
-     static let pageBackground = Color(hex: "#1A1D2E")
-     static let cardBackground = Color(hex: "#2D3044")
-     static let substrateBackground = Color(hex: "#293158")
-     static let primaryText = Color(hex: "#FFFFFF")
-     static let brandGold = Color(hex: "#F1B606")
-     static let highlightGreen = Color(hex: "#6FCF97")
-     static let highlightRed = Color(hex: "#EB5757")
-     init(hex: String) { ... }
- }
-*/
